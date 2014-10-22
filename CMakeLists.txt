@@ -8,11 +8,17 @@ if (OPENCMISS_DEPENDENCIES_LIBRARIES)
 else()
     SET(CMAKE_PREFIX_PATH ../cmake ${CMAKE_PREFIX_PATH})
     SET(OPENCMISS_DEPENDENCIES_CONFIGS_DIR ${CMAKE_CURRENT_BINARY_DIR})
+    SET(OCM_USE_METIS YES)
+    SET(OCM_USE_PARMETIS NO)
 endif()
 
 FIND_PACKAGE(BLAS CONFIG REQUIRED)
 FIND_PACKAGE(LAPACK CONFIG REQUIRED)
 FIND_PACKAGE(SCALAPACK CONFIG REQUIRED)
+if (OCM_USE_METIS)
+    message(STATUS "Use of MUMPS with METIS requested. Looking for library...")
+    FIND_PACKAGE(METIS 4 CONFIG REQUIRED)
+endif()
 if (OCM_USE_PARMETIS)
     message(STATUS "Use of MUMPS with ParMETIS requested. Looking for library...")
     FIND_PACKAGE(PARMETIS CONFIG REQUIRED)
@@ -32,6 +38,14 @@ ADD_LIBRARY(mumps STATIC ${mumps} ${dmumps})
 
 target_compile_definitions(mumps PRIVATE Add_ MUMPS_ARITH=MUMPS_ARITH_d)
 target_link_libraries(mumps PUBLIC blas scalapack)
+# Only add parmetis if wanted
+if (OCM_USE_METIS)
+    target_compile_definitions(mumps PRIVATE metis)
+    target_link_libraries(mumps PUBLIC metis)
+    TARGET_INCLUDE_DIRECTORIES(mumps PRIVATE 
+        $<TARGET_PROPERTY:metis,INTERFACE_INCLUDE_DIRECTORIES>
+    )
+endif()
 # Only add parmetis if wanted
 if (OCM_USE_PARMETIS)
     target_compile_definitions(mumps PRIVATE parmetis)

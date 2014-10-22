@@ -27,12 +27,15 @@ endif()
 
 # C test
 add_executable(ctest c_example.c)
+target_compile_definitions(ctest PRIVATE Add_)
 target_include_directories(ctest PRIVATE 
     ../include
     ${MPI_C_INCLUDE_PATH} ${MPI_Fortran_INCLUDE_PATH}
 )
-target_link_libraries(ctest PRIVATE 
-    mumps 
+target_link_libraries(ctest PRIVATE
+    mumps
+    $<$<BOOL:${OCM_USE_METIS}>:metis>
+    $<$<BOOL:${OCM_USE_PARMETIS}>:parmetis>
     ${MPI_C_LIBRARIES} ${MPI_Fortran_LIBRARIES}
 )
 add_test(c_test ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/ctest)
