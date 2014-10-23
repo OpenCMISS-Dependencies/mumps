@@ -23,6 +23,8 @@ if (UNIX)
     add_test(simple_par ${MPIEXEC} 
         ${MPIEXEC_NUMPROC_FLAG} ${SYSTEM_PROCESSOR_COUNT}
         ${simpletest_wrap})
+else()
+    message(WARNING "Simple Fortran test not implemented on non-UNIX systems")        
 endif()
 
 # C test
