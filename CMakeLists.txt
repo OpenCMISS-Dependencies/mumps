@@ -1,16 +1,12 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 3.0)
 PROJECT (MUMPS VERSION 4.10.0 LANGUAGES C Fortran)
 
-if (OPENCMISS_DEPENDENCIES_LIBRARIES)
-    SET(CMAKE_PREFIX_PATH ${OPENCMISS_DEPENDENCIES_CONFIGS_DIR} ${CMAKE_PREFIX_PATH})
-    set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${OPENCMISS_DEPENDENCIES_LIBRARIES})
-else()
-    SET(CMAKE_PREFIX_PATH ../cmake ${CMAKE_PREFIX_PATH})
-    SET(OPENCMISS_DEPENDENCIES_CONFIGS_DIR ${CMAKE_CURRENT_BINARY_DIR})
-    SET(BUILD_TESTING ON)
-    SET(USE_METIS YES)
-    SET(USE_PARMETIS NO)
-endif()
+# fortran mangling currently fixed to Add_
+
+option(BUILD_TESTS "${PROJECT_NAME} - Build tests" ON)
+option(USE_METIS "${PROJECT_NAME} - Use METIS 4" ON)
+option(USE_PARMETIS "${PROJECT_NAME} - Use ParMETIS (incl. METIS)" OFF)
+set(BUILD_PRECISION sdcz CACHE STRING "${PROJECT_NAME} - Build precisions (sdcz)")
 
 FIND_PACKAGE(MPI REQUIRED)
 FIND_PACKAGE(BLAS CONFIG REQUIRED)
@@ -27,16 +23,25 @@ endif()
 
 # create mtocpp
 file(GLOB mumps src/mumps*.c src/mumps*.F src/tools*.F)
-#file(GLOB smumps src/smu*.F)
-file(GLOB dmumps src/dmu*.F)
-#file(GLOB cmumps src/cmu*.F)
-#file(GLOB zmumps src/zmu*.F)
 
-# Create only double prec version
-#ADD_LIBRARY(mumps STATIC ${mumps} ${smumps} ${dmumps} ${cmumps} ${zmumps})
-ADD_LIBRARY(mumps STATIC ${mumps} ${dmumps})
+# Build objects for each precision and combine them into the later mumps target
+SET(PREC_LIBS )
+foreach(prec s d c z)
+    if(BUILD_PRECISION MATCHES [${prec}])
+        message(STATUS "Building precision '${prec}'")
+        file(GLOB prec_src src/${prec}mu*.F)
+        ADD_LIBRARY(${prec}mumps OBJECT ${prec_src} ${mumps})
+        target_compile_definitions(${prec}mumps PRIVATE Add_ MUMPS_ARITH=MUMPS_ARITH_${prec})
+        #target_compile_definitions(mumps PRIVATE )
+        list(APPEND PREC_LIBS "$<TARGET_OBJECTS:${prec}mumps>")
+        TARGET_INCLUDE_DIRECTORIES(${prec}mumps PRIVATE 
+            include
+            ${MPI_C_INCLUDE_PATH} ${MPI_Fortran_INCLUDE_PATH}
+        )
+    endif()
+endforeach()
 
-target_compile_definitions(mumps PRIVATE Add_ MUMPS_ARITH=MUMPS_ARITH_d)
+ADD_LIBRARY(mumps STATIC ${PREC_LIBS})
 target_link_libraries(mumps PUBLIC blas scalapack)
 set_target_properties(mumps PROPERTIES OUTPUT_NAME mumps-${MUMPS_VERSION})
 
@@ -44,28 +49,20 @@ set_target_properties(mumps PROPERTIES OUTPUT_NAME mumps-${MUMPS_VERSION})
 if (USE_PARMETIS)
     target_compile_definitions(mumps PRIVATE parmetis)
     target_link_libraries(mumps PUBLIC parmetis)
-    TARGET_INCLUDE_DIRECTORIES(mumps PRIVATE 
-        $<TARGET_PROPERTY:parmetis,INTERFACE_INCLUDE_DIRECTORIES>
-    )
 elseif(USE_METIS)
     target_compile_definitions(mumps PRIVATE metis)
     target_link_libraries(mumps PUBLIC metis)
-    TARGET_INCLUDE_DIRECTORIES(mumps PRIVATE 
-        $<TARGET_PROPERTY:metis,INTERFACE_INCLUDE_DIRECTORIES>
-    )
 endif()
 
-TARGET_INCLUDE_DIRECTORIES(mumps PRIVATE 
-    include
-    ${MPI_C_INCLUDE_PATH} ${MPI_Fortran_INCLUDE_PATH}
-)
-
-export(TARGETS mumps FILE ${OPENCMISS_DEPENDENCIES_CONFIGS_DIR}/mumps-config.cmake)
+install(TARGETS mumps EXPORT mumps-config
+    DESTINATION lib
+    INCLUDES DESTINATION include)
+install(EXPORT mumps-config DESTINATION lib/cmake/mumps-${MUMPS_VERSION})
 include(CMakePackageConfigHelpers)
-WRITE_BASIC_PACKAGE_VERSION_FILE(${OPENCMISS_DEPENDENCIES_CONFIGS_DIR}/mumps-${MUMPS_VERSION}/mumps-config-version.cmake
-    VERSION ${MUMPS_VERSION} COMPATIBILITY AnyNewerVersion)
+WRITE_BASIC_PACKAGE_VERSION_FILE(${CMAKE_CURRENT_BINARY_DIR}/mumps-config-version.cmake COMPATIBILITY AnyNewerVersion)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/mumps-config-version.cmake DESTINATION lib/cmake/mumps-${MUMPS_VERSION})
 
-if (BUILD_TESTING)
+if (BUILD_TESTS)
     enable_testing()
     add_subdirectory(examples)
 endif()
