@@ -32,12 +32,14 @@ foreach(prec s d c z)
         file(GLOB prec_src src/${prec}mu*.F)
         ADD_LIBRARY(${prec}mumps OBJECT ${prec_src} ${mumps})
         target_compile_definitions(${prec}mumps PRIVATE Add_ MUMPS_ARITH=MUMPS_ARITH_${prec})
-        #target_compile_definitions(mumps PRIVATE )
         list(APPEND PREC_LIBS "$<TARGET_OBJECTS:${prec}mumps>")
         TARGET_INCLUDE_DIRECTORIES(${prec}mumps PRIVATE 
             include
             ${MPI_C_INCLUDE_PATH} ${MPI_Fortran_INCLUDE_PATH}
         )
+        # Make sure the according header files are installed
+        install(DIRECTORY include/ DESTINATION include
+            FILES_MATCHING PATTERN "${prec}mu*.h")
     endif()
 endforeach()
 
@@ -57,6 +59,8 @@ endif()
 install(TARGETS mumps EXPORT mumps-config
     DESTINATION lib
     INCLUDES DESTINATION include)
+# common headers
+install(FILES include/mumps_c_types.h include/mumps_compat.h DESTINATION include)
 install(EXPORT mumps-config DESTINATION lib/cmake/mumps-${MUMPS_VERSION})
 include(CMakePackageConfigHelpers)
 WRITE_BASIC_PACKAGE_VERSION_FILE(${CMAKE_CURRENT_BINARY_DIR}/mumps-config-version.cmake COMPATIBILITY AnyNewerVersion)
