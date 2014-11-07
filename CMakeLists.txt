@@ -90,9 +90,9 @@ endif()
 
 install(TARGETS mumps EXPORT mumps-config
     DESTINATION lib
-    INCLUDES DESTINATION include)
+    INCLUDES DESTINATION include/mumps)
 # common headers
-install(FILES include/mumps_c_types.h include/mumps_compat.h DESTINATION include)
+install(FILES include/mumps_c_types.h include/mumps_compat.h DESTINATION include/mumps)
 install(EXPORT mumps-config DESTINATION lib/cmake/mumps-${MUMPS_VERSION})
 include(CMakePackageConfigHelpers)
 WRITE_BASIC_PACKAGE_VERSION_FILE(${CMAKE_CURRENT_BINARY_DIR}/mumps-config-version.cmake COMPATIBILITY AnyNewerVersion)
