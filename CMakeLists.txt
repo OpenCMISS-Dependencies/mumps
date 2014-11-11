@@ -71,7 +71,9 @@ endforeach()
 ADD_LIBRARY(mumps STATIC ${PREC_LIBS})
 target_link_libraries(mumps PUBLIC blas scalapack pord
     $<$<BOOL:${USE_PTSCOTCH}>:ptscotch>
-    $<$<BOOL:${USE_SCOTCH}>:scotch>)
+    $<$<BOOL:${USE_SCOTCH}>:scotch>
+    ${MPI_C_LIBRARIES} ${MPI_Fortran_LIBRARIES}
+)
 set_target_properties(mumps PROPERTIES OUTPUT_NAME mumps-${MUMPS_VERSION})
 
 # ParMETIS includes metis
