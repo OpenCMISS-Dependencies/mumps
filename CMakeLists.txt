@@ -1,5 +1,6 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 3.0)
 PROJECT (MUMPS VERSION 4.10.0 LANGUAGES C Fortran)
+SET(CMAKE_NO_SYSTEM_FROM_IMPORTED YES)
 
 # fortran mangling currently fixed to Add_
 
@@ -35,7 +36,34 @@ endif()
 add_subdirectory(PORD)
 
 # collect sources
-file(GLOB mumps src/mumps*.c src/mumps*.F src/tools*.F)
+SET(mumps-src
+    src/mumps_part9.F
+    src/mumps_common
+    src/mumps_ooc_common.F
+    src/mumps_orderings
+    src/mumps_size
+    src/mumps_io
+    src/mumps_io_basic
+    src/mumps_io_thread
+    src/mumps_io_err
+    src/mumps_static_mapping.F
+    src/mumps_sol_es.F
+	src/tools_common_mod.F
+)
+ADD_LIBRARY(mumps_common ${mumps-src})
+target_link_libraries(mumps_common PUBLIC blas scalapack pord
+    $<$<BOOL:${USE_PTSCOTCH}>:ptscotch>
+    $<$<BOOL:${USE_SCOTCH}>:scotch>
+    #${MPI_C_LIBRARIES} ${MPI_Fortran_LIBRARIES}
+)
+target_compile_definitions(mumps_common PRIVATE Add_ pord) 
+set_target_properties(mumps_common PROPERTIES OUTPUT_NAME mumps_common-${MUMPS_VERSION})
+TARGET_INCLUDE_DIRECTORIES(mumps_common PRIVATE include PORD/include)
+if (USE_PTSCOTCH)
+    target_compile_definitions(mumps_common PRIVATE ptscotch)
+elseif(USE_SCOTCH)
+    target_compile_definitions(mumps_common PRIVATE scotch)
+endif()
 
 # Build objects for each precision and combine them into the later mumps target
 SET(PREC_LIBS )
@@ -43,7 +71,12 @@ foreach(prec s d c z)
     if(BUILD_PRECISION MATCHES [${prec}])
         message(STATUS "Building precision '${prec}'")
         file(GLOB prec_src src/${prec}mu*.F)
-        ADD_LIBRARY(${prec}mumps OBJECT ${prec_src} ${mumps})
+        ADD_LIBRARY(${prec}mumps ${prec_src} src/mumps_c.c)
+        set_target_properties(${prec}mumps PROPERTIES
+            OUTPUT_NAME ${prec}mumps-${MUMPS_VERSION})
+        target_link_libraries(${prec}mumps PUBLIC
+            mumps_common pord
+            ${MPI_C_LIBRARIES} ${MPI_Fortran_LIBRARIES})
         target_compile_definitions(${prec}mumps PRIVATE
              Add_ 
              MUMPS_ARITH=MUMPS_ARITH_${prec}
@@ -53,28 +86,25 @@ foreach(prec s d c z)
         elseif(USE_SCOTCH)
             target_compile_definitions(${prec}mumps PRIVATE scotch)
         endif()
-        list(APPEND PREC_LIBS "$<TARGET_OBJECTS:${prec}mumps>")
+        list(APPEND PREC_LIBS ${prec}mumps)
+        if (USE_PTSCOTCH)
+            target_link_libraries(${prec}mumps PUBLIC ptscotch ptesmumps)
+        elseif(USE_SCOTCH)
+            target_link_libraries(${prec}mumps PUBLIC scotch esmumps)
+        endif()
         TARGET_INCLUDE_DIRECTORIES(${prec}mumps PRIVATE 
             include PORD/include
-            ${MPI_C_INCLUDE_PATH} ${MPI_Fortran_INCLUDE_PATH}
-            $<$<BOOL:${USE_PTSCOTCH}>:
-                $<TARGET_PROPERTY:scotch,INTERFACE_INCLUDE_DIRECTORIES>>
-            $<$<BOOL:${USE_SCOTCH}>:
-                $<TARGET_PROPERTY:scotch,INTERFACE_INCLUDE_DIRECTORIES>>
+            #${MPI_C_INCLUDE_PATH} ${MPI_Fortran_INCLUDE_PATH}
+            #$<$<BOOL:${USE_PTSCOTCH}>:
+            #    $<TARGET_PROPERTY:scotch,INTERFACE_INCLUDE_DIRECTORIES>>
+            #$<$<BOOL:${USE_SCOTCH}>:
+            #    $<TARGET_PROPERTY:scotch,INTERFACE_INCLUDE_DIRECTORIES>>
         )
         # Make sure the according header files are installed
         install(DIRECTORY include/ DESTINATION include
             FILES_MATCHING PATTERN "${prec}mu*.h")
     endif()
 endforeach()
-
-ADD_LIBRARY(mumps STATIC ${PREC_LIBS})
-target_link_libraries(mumps PUBLIC blas scalapack pord
-    $<$<BOOL:${USE_PTSCOTCH}>:ptscotch>
-    $<$<BOOL:${USE_SCOTCH}>:scotch>
-    ${MPI_C_LIBRARIES} ${MPI_Fortran_LIBRARIES}
-)
-set_target_properties(mumps PROPERTIES OUTPUT_NAME mumps-${MUMPS_VERSION})
 
 # ParMETIS includes metis
 #if (USE_PARMETIS)
@@ -84,13 +114,13 @@ set_target_properties(mumps PROPERTIES OUTPUT_NAME mumps-${MUMPS_VERSION})
 #    target_compile_definitions(mumps PRIVATE metis)
 #    target_link_libraries(mumps PUBLIC metis)
 #endif()
-if (USE_PTSCOTCH)
-    target_link_libraries(mumps PUBLIC ptscotch ptesmumps)
-elseif(USE_SCOTCH)
-    target_link_libraries(mumps PUBLIC scotch esmumps)
-endif()
+#if (USE_PTSCOTCH)
+#    target_link_libraries(mumps PUBLIC ptscotch ptesmumps)
+#elseif(USE_SCOTCH)
+#    target_link_libraries(mumps PUBLIC scotch esmumps)
+#endif()
 
-install(TARGETS mumps EXPORT mumps-config
+install(TARGETS mumps_common ${PREC_LIBS} EXPORT mumps-config
     DESTINATION lib
     INCLUDES DESTINATION include/mumps)
 # common headers

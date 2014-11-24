@@ -9,10 +9,10 @@ if (UNIX)
     add_executable(simpletest dsimpletest.F)
     target_include_directories(simpletest PRIVATE 
         ../include 
-        ${MPI_C_INCLUDE_PATH} ${MPI_Fortran_INCLUDE_PATH}
+        #${MPI_C_INCLUDE_PATH} ${MPI_Fortran_INCLUDE_PATH}
     )
     target_link_libraries(simpletest PRIVATE 
-        mumps ${MPI_C_LIBRARIES} ${MPI_Fortran_LIBRARIES}
+        dmumps #${MPI_C_LIBRARIES} ${MPI_Fortran_LIBRARIES}
     )
     
     SET(simpletest_wrap ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/simpletest_wrap.sh)
@@ -32,13 +32,13 @@ add_executable(ctest c_example.c)
 target_compile_definitions(ctest PRIVATE Add_)
 target_include_directories(ctest PRIVATE 
     ../include
-    ${MPI_C_INCLUDE_PATH} ${MPI_Fortran_INCLUDE_PATH}
+    #${MPI_C_INCLUDE_PATH} ${MPI_Fortran_INCLUDE_PATH}
 )
 target_link_libraries(ctest PRIVATE
-    mumps
-    $<$<BOOL:${OCM_USE_METIS}>:metis>
-    $<$<BOOL:${OCM_USE_PARMETIS}>:parmetis>
-    ${MPI_C_LIBRARIES} ${MPI_Fortran_LIBRARIES}
+    dmumps mumps_common
+    #$<$<BOOL:${OCM_USE_METIS}>:metis>
+    #$<$<BOOL:${OCM_USE_PARMETIS}>:parmetis>
+    #${MPI_C_LIBRARIES} ${MPI_Fortran_LIBRARIES}
 )
 add_test(c_test ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/ctest)
 add_test(c_test_par ${MPIEXEC} 
