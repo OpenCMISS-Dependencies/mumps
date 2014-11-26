@@ -76,7 +76,8 @@ foreach(prec s d c z)
             OUTPUT_NAME ${prec}mumps-${MUMPS_VERSION})
         target_link_libraries(${prec}mumps PUBLIC
             mumps_common pord
-            ${MPI_C_LIBRARIES} ${MPI_Fortran_LIBRARIES})
+            #${MPI_C_LIBRARIES} ${MPI_Fortran_LIBRARIES}
+        )
         target_compile_definitions(${prec}mumps PRIVATE
              Add_ 
              MUMPS_ARITH=MUMPS_ARITH_${prec}
