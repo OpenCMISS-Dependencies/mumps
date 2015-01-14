@@ -29,7 +29,7 @@ endif()
 
 # C test
 add_executable(ctest c_example.c)
-target_compile_definitions(ctest PRIVATE Add_)
+target_compile_definitions(ctest PRIVATE ${FORTRAN_MANGLING})
 target_include_directories(ctest PRIVATE 
     ../include
     #${MPI_C_INCLUDE_PATH} ${MPI_Fortran_INCLUDE_PATH}

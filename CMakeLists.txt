@@ -2,13 +2,12 @@ CMAKE_MINIMUM_REQUIRED(VERSION 3.0)
 PROJECT (MUMPS VERSION 4.10.0 LANGUAGES C Fortran)
 SET(CMAKE_NO_SYSTEM_FROM_IMPORTED YES)
 
-# fortran mangling currently fixed to Add_
-
 option(BUILD_TESTS "${PROJECT_NAME} - Build tests" ON)
 #option(USE_METIS "${PROJECT_NAME} - Use METIS 4" ON)
 #option(USE_PARMETIS "${PROJECT_NAME} - Use ParMETIS (incl. METIS)" OFF)
 option(USE_SCOTCH "${PROJECT_NAME} - Use Scotch" OFF)
 option(USE_PTSCOTCH "${PROJECT_NAME} - Use PT-Scotch" ON)
+option(FORTRAN_MANGLING "${PROJECT_NAME} - Fortran mangling scheme" Add_)
 set(BUILD_PRECISION sdcz CACHE STRING "${PROJECT_NAME} - Build precisions (sdcz)")
 
 FIND_PACKAGE(MPI REQUIRED)
@@ -56,7 +55,7 @@ target_link_libraries(mumps_common PUBLIC blas scalapack pord
     $<$<BOOL:${USE_SCOTCH}>:scotch>
     #${MPI_C_LIBRARIES} ${MPI_Fortran_LIBRARIES}
 )
-target_compile_definitions(mumps_common PRIVATE Add_ pord) 
+target_compile_definitions(mumps_common PRIVATE ${FORTRAN_MANGLING} pord) 
 set_target_properties(mumps_common PROPERTIES OUTPUT_NAME mumps_common-${MUMPS_VERSION})
 TARGET_INCLUDE_DIRECTORIES(mumps_common PRIVATE include PORD/include)
 if (USE_PTSCOTCH)
@@ -79,7 +78,7 @@ foreach(prec s d c z)
             #${MPI_C_LIBRARIES} ${MPI_Fortran_LIBRARIES}
         )
         target_compile_definitions(${prec}mumps PRIVATE
-             Add_ 
+             ${FORTRAN_MANGLING}
              MUMPS_ARITH=MUMPS_ARITH_${prec}
              pord)
         if (USE_PTSCOTCH)
