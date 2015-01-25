@@ -1,4 +1,4 @@
-if (UNIX)
+if (UNIX OR MINGW)
     INCLUDE( ProcessorCount )
     ProcessorCount(SYSTEM_PROCESSOR_COUNT)
     
@@ -9,10 +9,10 @@ if (UNIX)
     add_executable(simpletest dsimpletest.F)
     target_include_directories(simpletest PRIVATE 
         ../include 
-        #${MPI_C_INCLUDE_PATH} ${MPI_Fortran_INCLUDE_PATH}
+        ${MPI_C_INCLUDE_PATH} ${MPI_Fortran_INCLUDE_PATH}
     )
     target_link_libraries(simpletest PRIVATE 
-        dmumps #${MPI_C_LIBRARIES} ${MPI_Fortran_LIBRARIES}
+        dmumps ${MPI_C_LIBRARIES} ${MPI_Fortran_LIBRARIES}
     )
     
     SET(simpletest_wrap ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/simpletest_wrap.sh)
@@ -24,7 +24,7 @@ if (UNIX)
         ${MPIEXEC_NUMPROC_FLAG} ${SYSTEM_PROCESSOR_COUNT}
         ${simpletest_wrap})
 else()
-    message(WARNING "Simple Fortran test not implemented on non-UNIX systems")        
+    message(WARNING "Simple Fortran test not implemented on non-UNIX/non-shell environments")        
 endif()
 
 # C test
