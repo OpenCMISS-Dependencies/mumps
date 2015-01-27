@@ -55,8 +55,8 @@ SET(mumps-src
 )
 ADD_LIBRARY(mumps_common ${mumps-src})
 target_link_libraries(mumps_common PUBLIC blas scalapack pord
-    $<$<BOOL:${USE_PTSCOTCH}>:ptscotch>
-    $<$<BOOL:${USE_SCOTCH}>:scotch>
+    $<$<BOOL:${USE_PTSCOTCH}>:ptesmumps>
+    $<$<BOOL:${USE_SCOTCH}>:esmumps>
     #${MPI_C_LIBRARIES} ${MPI_Fortran_LIBRARIES}
 )
 target_compile_definitions(mumps_common PRIVATE ${FORTRAN_MANGLING} pord) 
