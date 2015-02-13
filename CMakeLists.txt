@@ -3,6 +3,8 @@ PROJECT (MUMPS VERSION 4.10.0 LANGUAGES C Fortran)
 SET(CMAKE_NO_SYSTEM_FROM_IMPORTED YES)
 
 option(BUILD_TESTS "${PROJECT_NAME} - Build tests" ON)
+option(PACKAGE_CONFIG_DIR "Directory for package config files (relative to CMAKE_INSTALL_PREFIX)" "lib/cmake")
+
 #option(USE_METIS "${PROJECT_NAME} - Use METIS 4" ON)
 #option(USE_PARMETIS "${PROJECT_NAME} - Use ParMETIS (incl. METIS)" OFF)
 option(USE_SCOTCH "${PROJECT_NAME} - Use Scotch" OFF)
@@ -129,7 +131,7 @@ install(TARGETS mumps_common ${PREC_LIBS} EXPORT mumps-config
     INCLUDES DESTINATION include/mumps)
 # common headers
 install(FILES include/mumps_c_types.h include/mumps_compat.h DESTINATION include/mumps)
-install(EXPORT mumps-config DESTINATION lib/cmake)
+install(EXPORT mumps-config DESTINATION ${PACKAGE_CONFIG_DIR})
 include(CMakePackageConfigHelpers)
 WRITE_BASIC_PACKAGE_VERSION_FILE(${CMAKE_CURRENT_BINARY_DIR}/mumps-config-version.cmake COMPATIBILITY AnyNewerVersion)
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/mumps-config-version.cmake DESTINATION lib/cmake)
