@@ -134,7 +134,7 @@ install(FILES include/mumps_c_types.h include/mumps_compat.h DESTINATION include
 install(EXPORT mumps-config DESTINATION ${PACKAGE_CONFIG_DIR})
 include(CMakePackageConfigHelpers)
 WRITE_BASIC_PACKAGE_VERSION_FILE(${CMAKE_CURRENT_BINARY_DIR}/mumps-config-version.cmake COMPATIBILITY AnyNewerVersion)
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/mumps-config-version.cmake DESTINATION lib/cmake)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/mumps-config-version.cmake DESTINATION ${PACKAGE_CONFIG_DIR})
 
 if (BUILD_TESTS)
     enable_testing()
