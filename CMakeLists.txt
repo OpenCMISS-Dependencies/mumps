@@ -5,10 +5,18 @@ SET(CMAKE_NO_SYSTEM_FROM_IMPORTED YES)
 option(BUILD_TESTS "${PROJECT_NAME} - Build tests" ON)
 option(PACKAGE_CONFIG_DIR "Directory for package config files (relative to CMAKE_INSTALL_PREFIX)" "lib/cmake")
 
+# The mumps interface to metis is currently too old and does not work with metis 5.
+# however, as this is the only component not updated yet, we simply ignore that link for now.
 #option(USE_METIS "${PROJECT_NAME} - Use METIS 4" ON)
-#option(USE_PARMETIS "${PROJECT_NAME} - Use ParMETIS (incl. METIS)" OFF)
+option(USE_PARMETIS "${PROJECT_NAME} - Use ParMETIS (incl. METIS)" OFF)
+
 option(USE_SCOTCH "${PROJECT_NAME} - Use Scotch" OFF)
 option(USE_PTSCOTCH "${PROJECT_NAME} - Use PT-Scotch" ON)
+# This is a dirty hack until questions http://stackoverflow.com/questions/30568733/conditional-transitive-link-libraries
+# and/or my post on the CMake Mailing List are answered. The transitive linking works for one level,
+# but if the imported package scotch has link dependencies itself, those are not known in this context
+# and hence linking will (possibly) fail if the package zlib is not re-included here. 
+option(SCOTCH_WITH_ZLIB "${PROJECT_NAME} - (PT-)Scotch has ZLIB support builtin" ON)
 option(FORTRAN_MANGLING "${PROJECT_NAME} - Fortran mangling scheme" Add_)
 set(BUILD_PRECISION sdcz CACHE STRING "${PROJECT_NAME} - Build precisions (sdcz)")
 
@@ -23,19 +31,22 @@ find_package(BLAS ${BLAS_VERSION} REQUIRED)
 find_package(LAPACK ${LAPACK_VERSION} REQUIRED)
 find_package(SCALAPACK ${SCALAPACK_VERSION} REQUIRED)
 
-#if (USE_PARMETIS)
-#    message(STATUS "Use of MUMPS with ParMETIS (incl. METIS) requested. Looking for library...")
-#    FIND_PACKAGE(PARMETIS REQUIRED)
+if (USE_PARMETIS)
+    message(STATUS "Use of MUMPS with ParMETIS (incl. METIS) requested. Looking for library...")
+    FIND_PACKAGE(PARMETIS REQUIRED)
 #elseif(USE_METIS)
 #    message(STATUS "Use of MUMPS with METIS 4 requested. Looking for library...")
 #    FIND_PACKAGE(METIS 4 REQUIRED)
-#endif()
+endif()
 if (USE_PTSCOTCH)
     message(STATUS "Use of MUMPS with PT-Scotch (incl. Scotch) requested. Looking for library...")
     FIND_PACKAGE(PTSCOTCH ${PTSCOTCH_VERSION} REQUIRED)
 elseif(USE_SCOTCH)
     message(STATUS "Use of MUMPS with Scotch requested. Looking for library...")
     FIND_PACKAGE(SCOTCH ${SCOTCH_VERSION} REQUIRED)
+endif()
+if (SCOTCH_WITH_ZLIB)
+    FIND_PACKAGE(ZLIB ${ZLIB_VERSION} REQUIRED)
 endif()
 
 add_subdirectory(PORD)
