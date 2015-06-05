@@ -9,14 +9,8 @@ option(PACKAGE_CONFIG_DIR "Directory for package config files (relative to CMAKE
 # however, as this is the only component not updated yet, we simply ignore that link for now.
 #option(USE_METIS "${PROJECT_NAME} - Use METIS 4" ON)
 option(USE_PARMETIS "${PROJECT_NAME} - Use ParMETIS (incl. METIS)" OFF)
-
 option(USE_SCOTCH "${PROJECT_NAME} - Use Scotch" OFF)
 option(USE_PTSCOTCH "${PROJECT_NAME} - Use PT-Scotch" ON)
-# This is a dirty hack until questions http://stackoverflow.com/questions/30568733/conditional-transitive-link-libraries
-# and/or my post on the CMake Mailing List are answered. The transitive linking works for one level,
-# but if the imported package scotch has link dependencies itself, those are not known in this context
-# and hence linking will (possibly) fail if the package zlib is not re-included here. 
-option(SCOTCH_WITH_ZLIB "${PROJECT_NAME} - (PT-)Scotch has ZLIB support builtin" ON)
 option(FORTRAN_MANGLING "${PROJECT_NAME} - Fortran mangling scheme" Add_)
 set(BUILD_PRECISION sdcz CACHE STRING "${PROJECT_NAME} - Build precisions (sdcz)")
 
@@ -44,9 +38,6 @@ if (USE_PTSCOTCH)
 elseif(USE_SCOTCH)
     message(STATUS "Use of MUMPS with Scotch requested. Looking for library...")
     FIND_PACKAGE(SCOTCH ${SCOTCH_VERSION} REQUIRED)
-endif()
-if (SCOTCH_WITH_ZLIB)
-    FIND_PACKAGE(ZLIB ${ZLIB_VERSION} REQUIRED)
 endif()
 
 add_subdirectory(PORD)
@@ -123,21 +114,11 @@ foreach(prec s d c z)
     endif()
 endforeach()
 
-# ParMETIS includes metis
-#if (USE_PARMETIS)
-#    target_compile_definitions(mumps PRIVATE parmetis)
-#    target_link_libraries(mumps PUBLIC parmetis)
-#elseif(USE_METIS)
-#    target_compile_definitions(mumps PRIVATE metis)
-#    target_link_libraries(mumps PUBLIC metis)
-#endif()
-#if (USE_PTSCOTCH)
-#    target_link_libraries(mumps PUBLIC ptscotch ptesmumps)
-#elseif(USE_SCOTCH)
-#    target_link_libraries(mumps PUBLIC scotch esmumps)
-#endif()
+# Add global interface target for easy linking if the build precisions are not known.
+add_library(mumps INTERFACE)
+target_link_libraries(mumps INTERFACE mumps_common ${PREC_LIBS} pord)
 
-install(TARGETS mumps_common ${PREC_LIBS} EXPORT mumps-config
+install(TARGETS mumps_common mumps ${PREC_LIBS} EXPORT mumps-config
     DESTINATION lib
     INCLUDES DESTINATION include/mumps)
 # common headers
@@ -145,7 +126,24 @@ install(FILES include/mumps_c_types.h include/mumps_compat.h DESTINATION include
 install(EXPORT mumps-config DESTINATION ${PACKAGE_CONFIG_DIR})
 include(CMakePackageConfigHelpers)
 WRITE_BASIC_PACKAGE_VERSION_FILE(${CMAKE_CURRENT_BINARY_DIR}/mumps-config-version.cmake COMPATIBILITY AnyNewerVersion)
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/mumps-config-version.cmake DESTINATION ${PACKAGE_CONFIG_DIR})
+file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/mumps-config-dependencies.cmake 
+    "include(CMakeFindDependencyMacro)\r\n"
+    "set(_OLD_IMPORT_PREFIX \${_IMPORT_PREFIX})\r\n"
+)
+if (USE_PARMETIS)
+    file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/mumps-config-dependencies.cmake "find_dependency(PARMETIS ${PARMETIS_VERSION})\r\n")
+endif()
+if (USE_SCOTCH)
+    file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/mumps-config-dependencies.cmake "find_dependency(SCOTCH ${SCOTCH_VERSION})\r\n")
+endif()
+if (USE_PTSCOTCH)
+    file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/mumps-config-dependencies.cmake "find_dependency(PTSCOTCH ${PTSCOTCH_VERSION})\r\n")
+endif()
+file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/mumps-config-dependencies.cmake "set(_IMPORT_PREFIX \${_OLD_IMPORT_PREFIX})")
+install(FILES 
+    ${CMAKE_CURRENT_BINARY_DIR}/mumps-config-version.cmake
+    ${CMAKE_CURRENT_BINARY_DIR}/mumps-config-dependencies.cmake
+    DESTINATION ${PACKAGE_CONFIG_DIR})
 
 if (BUILD_TESTS)
     enable_testing()
