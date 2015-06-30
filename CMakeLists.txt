@@ -182,6 +182,13 @@ if (USE_PTSCOTCH)
 elseif(USE_SCOTCH)
     target_compile_definitions(mumps_common PRIVATE scotch)
 endif()
+if (USE_PARMETIS)
+    target_compile_definitions(mumps_common PRIVATE parmetis)
+    target_link_libraries(mumps_common PUBLIC parmetis)
+elseif(USE_METIS)
+    target_compile_definitions(mumps_common PRIVATE metis)
+    target_link_libraries(mumps_common PUBLIC metis)
+endif()
 
 # Build objects for each precision and combine them into the later mumps target
 SET(PREC_LIBS )
