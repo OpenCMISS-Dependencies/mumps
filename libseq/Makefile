@@ -1,5 +1,6 @@
 #
-#  This file is part of MUMPS 4.10.0, built on Tue May 10 12:56:32 UTC 2011
+#  This file is part of MUMPS 5.0.0, released
+#  on Fri Feb 20 08:19:56 UTC 2015
 #
 all: libmpiseq
 

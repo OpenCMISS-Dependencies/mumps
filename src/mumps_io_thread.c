@@ -1,82 +1,84 @@
 /*
  *
- *  This file is part of MUMPS 4.10.0, built on Tue May 10 12:56:32 UTC 2011
+ *  This file is part of MUMPS 5.0.0, released
+ *  on Fri Feb 20 08:19:56 UTC 2015
  *
  *
- *  This version of MUMPS is provided to you free of charge. It is public
- *  domain, based on public domain software developed during the Esprit IV
- *  European project PARASOL (1996-1999). Since this first public domain
- *  version in 1999, research and developments have been supported by the
- *  following institutions: CERFACS, CNRS, ENS Lyon, INPT(ENSEEIHT)-IRIT,
- *  INRIA, and University of Bordeaux.
+ *  Copyright 1991-2015 CERFACS, CNRS, ENS Lyon, INP Toulouse, Inria,
+ *  University of Bordeaux.
  *
- *  The MUMPS team at the moment of releasing this version includes
- *  Patrick Amestoy, Maurice Bremond, Alfredo Buttari, Abdou Guermouche,
- *  Guillaume Joslin, Jean-Yves L'Excellent, Francois-Henry Rouet, Bora
- *  Ucar and Clement Weisbecker.
+ *  This version of MUMPS is provided to you free of charge. It is
+ *  released under the CeCILL-C license,
+ *  http://www.cecill.info/licences/Licence_CeCILL-C_V1-en.html, 
+ *  except for the external and optional ordering PORD, 
+ *  in separate directory PORD, which is public domain (see PORD/README).
  *
- *  We are also grateful to Emmanuel Agullo, Caroline Bousquet, Indranil
- *  Chowdhury, Philippe Combes, Christophe Daniel, Iain Duff, Vincent Espirat,
- *  Aurelia Fevre, Jacko Koster, Stephane Pralet, Chiara Puglisi, Gregoire
- *  Richard, Tzvetomila Slavova, Miroslav Tuma and Christophe Voemel who
- *  have been contributing to this project.
- *
- *  Up-to-date copies of the MUMPS package can be obtained
- *  from the Web pages:
- *  http://mumps.enseeiht.fr/  or  http://graal.ens-lyon.fr/MUMPS
- *
- *
- *   THIS MATERIAL IS PROVIDED AS IS, WITH ABSOLUTELY NO WARRANTY
- *   EXPRESSED OR IMPLIED. ANY USE IS AT YOUR OWN RISK.
- *
- *
- *  User documentation of any code that uses this software can
- *  include this complete notice. You can acknowledge (using
- *  references [1] and [2]) the contribution of this package
- *  in any scientific publication dependent upon the use of the
- *  package. You shall use reasonable endeavours to notify
- *  the authors of the package of this publication.
+ *  You can acknowledge (using references [1] and [2]) the contribution of
+ *  this package in any scientific publication dependent upon the use of
+ *  the package. Please use reasonable endeavours to notify the authors
+ *  of the package of this publication.
  *
  *   [1] P. R. Amestoy, I. S. Duff, J. Koster and  J.-Y. L'Excellent,
  *   A fully asynchronous multifrontal solver using distributed dynamic
  *   scheduling, SIAM Journal of Matrix Analysis and Applications,
  *   Vol 23, No 1, pp 15-41 (2001).
  *
- *   [2] P. R. Amestoy and A. Guermouche and J.-Y. L'Excellent and
+ *   [2] P. R. Amestoy, A. Guermouche, J.-Y. L'Excellent and
  *   S. Pralet, Hybrid scheduling for the parallel solution of linear
  *   systems. Parallel Computing Vol 32 (2), pp 136-156 (2006).
+ *
+ *  As a counterpart to the access to the source code and rights to copy,
+ *  modify and redistribute granted by the license, users are provided only
+ *  with a limited warranty  and the software's author,  the holder of the
+ *  economic rights,  and the successive licensors  have only  limited
+ *  liability. 
+ *
+ *  In this respect, the user's attention is drawn to the risks associated
+ *  with loading,  using,  modifying and/or developing or reproducing the
+ *  software by the user in light of its specific status of free software,
+ *  that may mean  that it is complicated to manipulate,  and  that  also
+ *  therefore means  that it is reserved for developers  and  experienced
+ *  professionals having in-depth computer knowledge. Users are therefore
+ *  encouraged to load and test the software's suitability as regards their
+ *  requirements in conditions enabling the security of their systems and/or 
+ *  data to be ensured and,  more generally, to use and operate it in the 
+ *  same conditions as regards security. 
+ *
+ *  The fact that you are presently reading this means that you have had
+ *  knowledge of the CeCILL-C license and that you accept its terms.
  *
  */
 #include "mumps_io_basic.h"
 #include "mumps_io_err.h"
 #include "mumps_io_thread.h"
+#include "mumps_c_types.h"
 #if ! defined(MUMPS_WIN32) && ! defined(WITHOUT_PTHREAD)
 /* Exported global variables */
-int io_flag_stop,current_req_num;
+MUMPS_INT io_flag_stop,current_req_num;
 pthread_t io_thread,main_thread;
 pthread_mutex_t io_mutex;
 pthread_cond_t cond_io,cond_nb_free_finished_requests,cond_nb_free_active_requests,cond_stop;
 pthread_mutex_t io_mutex_cond;
-int int_sem_io,int_sem_nb_free_finished_requests,int_sem_nb_free_active_requests,int_sem_stop;
-int with_sem;
+MUMPS_INT int_sem_io,int_sem_nb_free_finished_requests,int_sem_nb_free_active_requests,int_sem_stop;
+MUMPS_INT with_sem;
 struct request_io *io_queue;
-int first_active,last_active,nb_active;
-int *finished_requests_inode,*finished_requests_id,first_finished_requests,
+MUMPS_INT first_active,last_active,nb_active;
+MUMPS_INT *finished_requests_inode,*finished_requests_id,first_finished_requests,
   last_finished_requests,nb_finished_requests,smallest_request_id;
-int mumps_owns_mutex;
-int test_request_called_from_mumps;
+MUMPS_INT mumps_owns_mutex;
+MUMPS_INT test_request_called_from_mumps;
 /* Other global variables */
 double inactive_time_io_thread;
-int time_flag_io_thread;
+MUMPS_INT time_flag_io_thread;
 struct timeval origin_time_io_thread;
 /**
  * Main function of the io thread when semaphores are used.
  */
 void*  mumps_async_thread_function_with_sem (void* arg){
    struct request_io *current_io_request;
-   int ierr,_sem_stop;
+   MUMPS_INT ierr,_sem_stop;
    struct timeval start_time,end_time;
-   int ret_code;
+   MUMPS_INT ret_code;
    for (;;){      
      gettimeofday(&start_time,NULL);
        if(with_sem==2){
@@ -165,11 +167,11 @@ void*  mumps_async_thread_function_with_sem (void* arg){
 /* Not reached */
    return NULL;
 }
-int mumps_test_request_th(int* request_id,int *flag){
+MUMPS_INT mumps_test_request_th(MUMPS_INT* request_id,MUMPS_INT *flag){
   /* Tests if the request "request_id" has finished. It sets the flag  */
   /* argument to 1 if the request has finished (0 otherwise)           */
-  int request_pos;
-  int i;
+  MUMPS_INT request_pos;
+  MUMPS_INT i;
   i=mumps_check_error_th();
   if(i!=0){
     return i;
@@ -228,8 +230,8 @@ int mumps_test_request_th(int* request_id,int *flag){
   pthread_mutex_unlock(&io_mutex);
   return 0;
 }
-int mumps_wait_req_sem_th(int *request_id){
-  int i,j;
+MUMPS_INT mumps_wait_req_sem_th(MUMPS_INT *request_id){
+  MUMPS_INT i,j;
   j=first_active;
   for(i=0;i<nb_active;i++){
     if(io_queue[j].req_num==*request_id) break;
@@ -240,9 +242,9 @@ int mumps_wait_req_sem_th(int *request_id){
   }
   return 0;
 }
-int mumps_wait_request_th(int *request_id){
+MUMPS_INT mumps_wait_request_th(MUMPS_INT *request_id){
   /* waits for the termination of the request "request_id" */
-  int flag=0,ierr;
+  MUMPS_INT flag=0,ierr;
   if(with_sem!=2){
     while(!flag){
       ierr=mumps_test_request_th(request_id,&flag);
@@ -259,7 +261,7 @@ int mumps_wait_request_th(int *request_id){
   }
   return 0;
 }
-int mumps_is_there_finished_request_th(int* flag){
+MUMPS_INT mumps_is_there_finished_request_th(MUMPS_INT* flag){
   if(!mumps_owns_mutex) pthread_mutex_lock(&io_mutex);
   if(nb_finished_requests==0){
     *flag=0;
@@ -270,11 +272,11 @@ int mumps_is_there_finished_request_th(int* flag){
   if(!mumps_owns_mutex) pthread_mutex_unlock(&io_mutex);
   return 0;
 }
-int mumps_clean_finished_queue_th(){
+MUMPS_INT mumps_clean_finished_queue_th(){
    /* Cleans the finished request queue. On exit, the queue is empty.*/
-   int local_flag;
-   int cur_req;
-   int loc_owned_mutex=0,ierr;
+   MUMPS_INT local_flag;
+   MUMPS_INT cur_req;
+   MUMPS_INT loc_owned_mutex=0,ierr;
    if(!mumps_owns_mutex){
       pthread_mutex_lock(&io_mutex);
       mumps_owns_mutex=1;
@@ -296,8 +298,8 @@ int mumps_clean_finished_queue_th(){
    }
    return 0;
 }
-int mumps_clean_request_th(int* request_id){
-  int ierr;
+MUMPS_INT mumps_clean_request_th(MUMPS_INT* request_id){
+  MUMPS_INT ierr;
   ierr=mumps_check_error_th();
   if(ierr!=0){
     return ierr;
@@ -321,9 +323,9 @@ int mumps_clean_request_th(int* request_id){
   }
   return 0;
 }
-int mumps_low_level_init_ooc_c_th(int* async, int* ierr){
-  int i, ret_code;    
-  char buf[64];
+MUMPS_INT mumps_low_level_init_ooc_c_th(MUMPS_INT* async, MUMPS_INT* ierr){
+  MUMPS_INT i, ret_code;    
+  char buf[128];
   /* Computes the number of files needed. Uses ceil value. */
   *ierr=0;
   current_req_num=0;
@@ -358,8 +360,8 @@ int mumps_low_level_init_ooc_c_th(int* async, int* ierr){
         io_queue[i].int_local_cond=0;
       }
     }
-    finished_requests_id=(int *)malloc(MAX_IO*2*sizeof(int));
-    finished_requests_inode=(int *)malloc(MAX_IO*2*sizeof(int));
+    finished_requests_id=(MUMPS_INT *)malloc(MAX_IO*2*sizeof(MUMPS_INT));
+    finished_requests_inode=(MUMPS_INT *)malloc(MAX_IO*2*sizeof(MUMPS_INT));
     for(i=0;i<MAX_IO*2;i++){
       finished_requests_id[i]=-9999;
       finished_requests_inode[i]=-9999;
@@ -392,15 +394,15 @@ int mumps_low_level_init_ooc_c_th(int* async, int* ierr){
   }
   return 0;
 }
-int mumps_async_write_th(const int * strat_IO, 
+MUMPS_INT mumps_async_write_th(const MUMPS_INT * strat_IO, 
                         void * address_block,
                         long long block_size,
-                        int * inode,
-                        int * request_arg,
-                        int * type,
+                        MUMPS_INT * inode,
+                        MUMPS_INT * request_arg,
+                        MUMPS_INT * type,
                         long long vaddr,
-                        int * ierr){
-  int cur_req;
+                        MUMPS_INT * ierr){
+  MUMPS_INT cur_req;
   *ierr=mumps_check_error_th();
   if(*ierr!=0){
     return *ierr;
@@ -448,15 +450,15 @@ int mumps_async_write_th(const int * strat_IO,
   }
   return 0;
 }
-int mumps_async_read_th(const int * strat_IO, 
+MUMPS_INT mumps_async_read_th(const MUMPS_INT * strat_IO, 
                        void * address_block,
                        long long  block_size,
-                       int * inode,
-                       int * request_arg,
-                        int * type,
+                       MUMPS_INT * inode,
+                       MUMPS_INT * request_arg,
+                        MUMPS_INT * type,
                        long long vaddr,
-                       int * ierr){
-  int cur_req;  
+                       MUMPS_INT * ierr){
+  MUMPS_INT cur_req;  
   *ierr=mumps_check_error_th();
   if(*ierr!=0){
     return *ierr;
@@ -510,8 +512,8 @@ int mumps_async_read_th(const int * strat_IO,
   pthread_mutex_unlock(&io_mutex);
   return 0;
 }
-int mumps_clean_io_data_c_th(int *myid){
-  int i;
+MUMPS_INT mumps_clean_io_data_c_th(MUMPS_INT *myid){
+  MUMPS_INT i;
   /* cleans the thread/io management data*/
   if(mumps_io_flag_async){
     /*we can use either signals or mutexes for this step */
@@ -551,11 +553,11 @@ int mumps_clean_io_data_c_th(int *myid){
   free(finished_requests_inode);
   return 0;
 }
-int mumps_get_sem(void *arg,int *value){
+MUMPS_INT mumps_get_sem(void *arg,MUMPS_INT *value){
   switch(with_sem){
   case 2:
     pthread_mutex_lock(&io_mutex_cond);
-    *value=*((int *)arg);
+    *value=*((MUMPS_INT *)arg);
     pthread_mutex_unlock(&io_mutex_cond);
     break;
   default:
@@ -563,12 +565,12 @@ int mumps_get_sem(void *arg,int *value){
   }
   return 0;
 }
-int mumps_wait_sem(void *arg,pthread_cond_t *cond){
-  int *tmp_pointer;
+MUMPS_INT mumps_wait_sem(void *arg,pthread_cond_t *cond){
+  MUMPS_INT *tmp_pointer;
   switch(with_sem){
   case 2:
     pthread_mutex_lock(&io_mutex_cond);
-    tmp_pointer=(int *)arg;
+    tmp_pointer=(MUMPS_INT *)arg;
     while(*tmp_pointer==0){
       pthread_cond_wait(cond, &io_mutex_cond);
     }
@@ -580,12 +582,12 @@ int mumps_wait_sem(void *arg,pthread_cond_t *cond){
   }
   return 0;  
 }
-int mumps_post_sem(void *arg,pthread_cond_t *cond){
-  int *tmp_pointer;
+MUMPS_INT mumps_post_sem(void *arg,pthread_cond_t *cond){
+  MUMPS_INT *tmp_pointer;
   switch(with_sem){
   case 2:
     pthread_mutex_lock(&io_mutex_cond);
-    tmp_pointer=(int *)arg;
+    tmp_pointer=(MUMPS_INT *)arg;
     (*tmp_pointer)++;
     if(*tmp_pointer==1){
       pthread_cond_broadcast(cond);
