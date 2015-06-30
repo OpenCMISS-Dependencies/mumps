@@ -1,49 +1,14 @@
 !
-!  This file is part of MUMPS 4.10.0, built on Tue May 10 12:56:32 UTC 2011
+!  This file is part of MUMPS 5.0.0, released
+!  on Fri Feb 20 08:19:56 UTC 2015
 !
 !
-!  This version of MUMPS is provided to you free of charge. It is public
-!  domain, based on public domain software developed during the Esprit IV
-!  European project PARASOL (1996-1999). Since this first public domain
-!  version in 1999, research and developments have been supported by the
-!  following institutions: CERFACS, CNRS, ENS Lyon, INPT(ENSEEIHT)-IRIT,
-!  INRIA, and University of Bordeaux.
+!  Copyright 1991-2015 CERFACS, CNRS, ENS Lyon, INP Toulouse, Inria,
+!  University of Bordeaux.
 !
-!  The MUMPS team at the moment of releasing this version includes
-!  Patrick Amestoy, Maurice Bremond, Alfredo Buttari, Abdou Guermouche,
-!  Guillaume Joslin, Jean-Yves L'Excellent, Francois-Henry Rouet, Bora
-!  Ucar and Clement Weisbecker.
-!
-!  We are also grateful to Emmanuel Agullo, Caroline Bousquet, Indranil
-!  Chowdhury, Philippe Combes, Christophe Daniel, Iain Duff, Vincent Espirat,
-!  Aurelia Fevre, Jacko Koster, Stephane Pralet, Chiara Puglisi, Gregoire
-!  Richard, Tzvetomila Slavova, Miroslav Tuma and Christophe Voemel who
-!  have been contributing to this project.
-!
-!  Up-to-date copies of the MUMPS package can be obtained
-!  from the Web pages:
-!  http://mumps.enseeiht.fr/  or  http://graal.ens-lyon.fr/MUMPS
-!
-!
-!   THIS MATERIAL IS PROVIDED AS IS, WITH ABSOLUTELY NO WARRANTY
-!   EXPRESSED OR IMPLIED. ANY USE IS AT YOUR OWN RISK.
-!
-!
-!  User documentation of any code that uses this software can
-!  include this complete notice. You can acknowledge (using
-!  references [1] and [2]) the contribution of this package
-!  in any scientific publication dependent upon the use of the
-!  package. You shall use reasonable endeavours to notify
-!  the authors of the package of this publication.
-!
-!   [1] P. R. Amestoy, I. S. Duff, J. Koster and  J.-Y. L'Excellent,
-!   A fully asynchronous multifrontal solver using distributed dynamic
-!   scheduling, SIAM Journal of Matrix Analysis and Applications,
-!   Vol 23, No 1, pp 15-41 (2001).
-!
-!   [2] P. R. Amestoy and A. Guermouche and J.-Y. L'Excellent and
-!   S. Pralet, Hybrid scheduling for the parallel solution of linear
-!   systems. Parallel Computing Vol 32 (2), pp 136-156 (2006).
+!  This version of MUMPS is provided to you free of charge. It is
+!  released under the CeCILL-C license:
+!  http://www.cecill.info/licences/Licence_CeCILL-C_V1-en.html
 !
       TYPE ZMUMPS_ROOT_STRUC
         SEQUENCE
@@ -70,6 +35,11 @@
         COMPLEX(kind=8), DIMENSION(:,:), POINTER :: RHS_ROOT, rootpad
 !       for try_nullspace preprocessing constant only:
         DOUBLE PRECISION :: QR_RCOND, rootpad3
-        LOGICAL yes, gridinit_done
+        LOGICAL :: yes, gridinit_done
+!       for SVD on root (#define try_null_space)
+        COMPLEX(kind=8), DIMENSION(:,:), POINTER :: SVD_U, SVD_VT
+!       for RR on root (#define try_null_space)
+        DOUBLE PRECISION, DIMENSION(:), POINTER :: SINGULAR_VALUES
+        INTEGER :: NB_SINGULAR_VALUES
 !
       END TYPE ZMUMPS_ROOT_STRUC

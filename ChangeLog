@@ -2,6 +2,55 @@
 = ChangeLog =
 -------------
 
+Changes from 4.10.0 to 5.0.0
+* Userguide revisited
+* Compatibility with metis 5.1.0/parmetis 4.0.3, and with
+  scotch/pt-scotch 6.0
+* Matlab interface updated (scaling vectors (COLSCA, ROWSCA) and
+  A-1 feature ICNTL(30) are now available)
+* Improved sequential and parallel performance for computing selected entries of 
+  A-1 (ICNTL(30))
+* Workspace for solve phase, of size B x N per processor (B: block
+  size controlled by ICNTL(27)) divided by almost #procs. Default
+  value of B increased.
+* Parallel symmetric indefinite elemental matrices: improved numerical behaviour
+* Performance of solve phase improved 
+* Finer control of error analysis and iterative refinement (ICNTL(11))
+* Memory for analysis phase (mapping) reduced.
+* Better support for 64-bit integers (see INSTALL file)
+* Improvements and corrections to parallel analysis (ICNTL(28)),
+  deterministic graph construction forced with -DDETERMINISTIC_PARALLEL_GRAPH
+* Forward elimination (ICNTL(32)) can be done during factorization
+* Possibility to use a workspace (WK_USER, LWK_USER) allocated by user
+* Very occasional numerical bug in parallel out-of-core case
+  corrected (thanks to EDF and Samtech for the validation)
+* More efficient processing of sparse right-hand-sides (see ICNTL(20))
+* Count for entries in factors now include parallel root node
+* Amalgamation of the assembly tree revisited
+* Scaling arrays (COLSCA, ROWSCA) also returned at C interface level
+* OOC_NB_FILE_TYPE is part of the MUMPS structure, for
+  a better management of multiple OOC instances
+* Warning +2 set only once (could lead to incorrect +4 in
+  case of iterative refinement + error analysis)
+* Warning +4 has disappeared from documentation (since it
+  was never occurring -- JCN never modified on exit)
+* Error code -16 now raised for the case N=0 even on distributed
+  matrices (thanks to P.Jolivet for noticing this)
+* Use BLAS3 routines for efficiency even in case of BLAS2 operations
+  (-DMUMPS_USE_BLAS2 allows the use of BLAS2 routines for such
+  operations)
+* Message "problem with NIV2_FLOPS message" should no more occur
+  (there was still an occasional problem in 4.10.0)
+* Improved determinant computation (ICNTL(33)) in case of singular
+  matrix + scaling (where zero pivots are excluded)
+* Trace ' PANEL: INIT and force STRAT_IO=' suppressed
+* Some OpenMP directives added (multithreaded BLAS still needed)
+* Null pivot (ICNTL(24)) and null space detection ICNTL(25)) improved
+  for unsymmetric matrices
+* Fortran automatic arrays (e.g. in mumps_static_mapping.F) suppressed
+  to avoid risks of stack overflows
+* Routine names and filenames changed
+
 Changes from 4.9.2 to 4.10.0
 * Modified variable names and variable contents in Make.inc/Makefile*
   for Windows (Makefile.inc from an older version needs modifications,
@@ -94,7 +143,7 @@ Changes from 4.8.4 to 4.9
   statements (HP-UX compilers)
 * Fixed problem of explicit interface in [SDCZ]MUMPS_521
 * Out-of-core strategy from 4.7.3 can be reactivated with -DOLD_OOC_NOPANEL
-* Message "problem with NIV2_FLOPS message" no more occurs
+* Message "problem with NIV2_FLOPS message" should no more occur
 * Avoid compilation problem with old versions of gfortran
 
 
@@ -282,7 +331,7 @@ Changes from 4.4.0 to 4.5.0
 * improved numerical features for symmetric indefinite matrices
     - two-by-two pivots
     - symmetric scaling
-    - ordering based on compressed graph prserving two by two pivots
+    - ordering based on compressed graph preserving two by two pivots
     - constrained ordering
 * 2D cyclic Schur better validated
 * problems resulting from automatic array copies done by compiler corrected

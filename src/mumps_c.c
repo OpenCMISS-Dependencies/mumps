@@ -1,50 +1,51 @@
 /*
  *
- *  This file is part of MUMPS 4.10.0, built on Tue May 10 12:56:32 UTC 2011
+ *  This file is part of MUMPS 5.0.0, released
+ *  on Fri Feb 20 08:19:56 UTC 2015
  *
  *
- *  This version of MUMPS is provided to you free of charge. It is public
- *  domain, based on public domain software developed during the Esprit IV
- *  European project PARASOL (1996-1999). Since this first public domain
- *  version in 1999, research and developments have been supported by the
- *  following institutions: CERFACS, CNRS, ENS Lyon, INPT(ENSEEIHT)-IRIT,
- *  INRIA, and University of Bordeaux.
+ *  Copyright 1991-2015 CERFACS, CNRS, ENS Lyon, INP Toulouse, Inria,
+ *  University of Bordeaux.
  *
- *  The MUMPS team at the moment of releasing this version includes
- *  Patrick Amestoy, Maurice Bremond, Alfredo Buttari, Abdou Guermouche,
- *  Guillaume Joslin, Jean-Yves L'Excellent, Francois-Henry Rouet, Bora
- *  Ucar and Clement Weisbecker.
+ *  This version of MUMPS is provided to you free of charge. It is
+ *  released under the CeCILL-C license,
+ *  http://www.cecill.info/licences/Licence_CeCILL-C_V1-en.html, 
+ *  except for the external and optional ordering PORD, 
+ *  in separate directory PORD, which is public domain (see PORD/README).
  *
- *  We are also grateful to Emmanuel Agullo, Caroline Bousquet, Indranil
- *  Chowdhury, Philippe Combes, Christophe Daniel, Iain Duff, Vincent Espirat,
- *  Aurelia Fevre, Jacko Koster, Stephane Pralet, Chiara Puglisi, Gregoire
- *  Richard, Tzvetomila Slavova, Miroslav Tuma and Christophe Voemel who
- *  have been contributing to this project.
- *
- *  Up-to-date copies of the MUMPS package can be obtained
- *  from the Web pages:
- *  http://mumps.enseeiht.fr/  or  http://graal.ens-lyon.fr/MUMPS
- *
- *
- *   THIS MATERIAL IS PROVIDED AS IS, WITH ABSOLUTELY NO WARRANTY
- *   EXPRESSED OR IMPLIED. ANY USE IS AT YOUR OWN RISK.
- *
- *
- *  User documentation of any code that uses this software can
- *  include this complete notice. You can acknowledge (using
- *  references [1] and [2]) the contribution of this package
- *  in any scientific publication dependent upon the use of the
- *  package. You shall use reasonable endeavours to notify
- *  the authors of the package of this publication.
+ *  You can acknowledge (using references [1] and [2]) the contribution of
+ *  this package in any scientific publication dependent upon the use of
+ *  the package. Please use reasonable endeavours to notify the authors
+ *  of the package of this publication.
  *
  *   [1] P. R. Amestoy, I. S. Duff, J. Koster and  J.-Y. L'Excellent,
  *   A fully asynchronous multifrontal solver using distributed dynamic
  *   scheduling, SIAM Journal of Matrix Analysis and Applications,
  *   Vol 23, No 1, pp 15-41 (2001).
  *
- *   [2] P. R. Amestoy and A. Guermouche and J.-Y. L'Excellent and
+ *   [2] P. R. Amestoy, A. Guermouche, J.-Y. L'Excellent and
  *   S. Pralet, Hybrid scheduling for the parallel solution of linear
  *   systems. Parallel Computing Vol 32 (2), pp 136-156 (2006).
+ *
+ *  As a counterpart to the access to the source code and rights to copy,
+ *  modify and redistribute granted by the license, users are provided only
+ *  with a limited warranty  and the software's author,  the holder of the
+ *  economic rights,  and the successive licensors  have only  limited
+ *  liability. 
+ *
+ *  In this respect, the user's attention is drawn to the risks associated
+ *  with loading,  using,  modifying and/or developing or reproducing the
+ *  software by the user in light of its specific status of free software,
+ *  that may mean  that it is complicated to manipulate,  and  that  also
+ *  therefore means  that it is reserved for developers  and  experienced
+ *  professionals having in-depth computer knowledge. Users are therefore
+ *  encouraged to load and test the software's suitability as regards their
+ *  requirements in conditions enabling the security of their systems and/or 
+ *  data to be ensured and,  more generally, to use and operate it in the 
+ *  same conditions as regards security. 
+ *
+ *  The fact that you are presently reading this means that you have had
+ *  knowledge of the CeCILL-C license and that you accept its terms.
  *
  */
 /* Written by JYL, march 2002 */
@@ -130,6 +131,9 @@ MUMPS_F77( MUMPS_INT      *job,
            MUMPS_INT      *n,
            MUMPS_INT      *icntl,
            MUMPS_REAL     *cntl,
+           MUMPS_INT      *keep,
+           MUMPS_REAL     *dkeep,
+           MUMPS_INT8     *keep8,
            MUMPS_INT      *nz,
            MUMPS_INT      *irn,
            MUMPS_INT      *irn_avail,
@@ -204,10 +208,9 @@ MUMPS_F77( MUMPS_INT      *job,
            MUMPS_INT      *ooc_prefixlen,
            MUMPS_INT      *write_problemlen
            );
-#ifdef return_scaling
 /*
- * Those two are static. They are passed inside cmumps_f77 but
- * might also be changed on return by MUMPS_AFFECT_COLSCA/ROWSCA
+ * COLSCA and ROWSCA are static. They are passed inside cmumps_f77 but
+ * might also be changed on return by MUMPS_ASSIGN_COLSCA/ROWSCA
  * NB: They are put here because they use MUMPS_REAL and need thus
  * one symbol per arithmetic.
  */
@@ -215,8 +218,8 @@ MUMPS_F77( MUMPS_INT      *job,
 # define MUMPS_COLSCA_STATIC SMUMPS_COLSCA_STATIC
 # define MUMPS_ROWSCA_STATIC SMUMPS_ROWSCA_STATIC
 #elif MUMPS_ARITH == MUMPS_ARITH_d
-# define MUMPS_COLSCA_STATIC SMUMPS_COLSCA_STATIC
-# define MUMPS_ROWSCA_STATIC SMUMPS_ROWSCA_STATIC
+# define MUMPS_COLSCA_STATIC DMUMPS_COLSCA_STATIC
+# define MUMPS_ROWSCA_STATIC DMUMPS_ROWSCA_STATIC
 #elif MUMPS_ARITH == MUMPS_ARITH_c
 # define MUMPS_COLSCA_STATIC CMUMPS_COLSCA_STATIC
 # define MUMPS_ROWSCA_STATIC CMUMPS_ROWSCA_STATIC
@@ -226,10 +229,10 @@ MUMPS_F77( MUMPS_INT      *job,
 #endif
 static MUMPS_REAL * MUMPS_COLSCA_STATIC;
 static MUMPS_REAL * MUMPS_ROWSCA_STATIC;
-#define MUMPS_AFFECT_COLSCA \
-    F_SYM_ARITH(affect_colsca,AFFECT_COLSCA)
+#define MUMPS_ASSIGN_COLSCA \
+    F_SYM_ARITH(assign_colsca,ASSIGN_COLSCA)
 void MUMPS_CALL
-MUMPS_AFFECT_COLSCA(MUMPS_REAL * f77colsca)
+MUMPS_ASSIGN_COLSCA(MUMPS_REAL * f77colsca)
 {
   MUMPS_COLSCA_STATIC = f77colsca;
 }
@@ -240,10 +243,10 @@ MUMPS_NULLIFY_C_COLSCA()
 {
   MUMPS_COLSCA_STATIC = 0;
 }
-#define MUMPS_AFFECT_ROWSCA \
-    F_SYM_ARITH(affect_rowsca,AFFECT_ROWSCA)
+#define MUMPS_ASSIGN_ROWSCA \
+    F_SYM_ARITH(assign_rowsca,ASSIGN_ROWSCA)
 void MUMPS_CALL
-MUMPS_AFFECT_ROWSCA(MUMPS_REAL * f77rowsca)
+MUMPS_ASSIGN_ROWSCA(MUMPS_REAL * f77rowsca)
 {
   MUMPS_ROWSCA_STATIC = f77rowsca;
 }
@@ -254,7 +257,6 @@ MUMPS_NULLIFY_C_ROWSCA()
 {
   MUMPS_ROWSCA_STATIC = 0;
 }
-#endif /* return_scaling */
 #if MUMPS_ARITH == MUMPS_ARITH_s
 # define mumps_c       smumps_c
 # define MUMPS_STRUC_C SMUMPS_STRUC_C
@@ -277,6 +279,9 @@ mumps_c(MUMPS_STRUC_C * mumps_par)
      */
     MUMPS_INT *icntl;
     MUMPS_REAL *cntl;
+    MUMPS_INT *keep;
+    MUMPS_REAL *dkeep;
+    MUMPS_INT8 *keep8;
     MUMPS_INT *irn; MUMPS_INT *jcn; MUMPS_COMPLEX *a;
     MUMPS_INT *irn_loc; MUMPS_INT *jcn_loc; MUMPS_COMPLEX *a_loc;
     MUMPS_INT *eltptr, *eltvar; MUMPS_COMPLEX *a_elt;
@@ -307,9 +312,9 @@ mumps_c(MUMPS_STRUC_C * mumps_par)
     MUMPS_REAL rdummy; MUMPS_REAL *rdummyp;
     MUMPS_COMPLEX cdummy; MUMPS_COMPLEX *cdummyp;
     /* String lengths to be passed to Fortran by address */
-    int ooc_tmpdirlen;
-    int ooc_prefixlen;
-    int write_problemlen;
+    MUMPS_INT ooc_tmpdirlen;
+    MUMPS_INT ooc_prefixlen;
+    MUMPS_INT write_problemlen;
     int i;
     static const MUMPS_INT no = 0;
     static const MUMPS_INT yes = 1;
@@ -328,7 +333,7 @@ mumps_c(MUMPS_STRUC_C * mumps_par)
       { /* job = -1: we just reset all pointers to 0 */
         mumps_par->irn=0; mumps_par->jcn=0; mumps_par->a=0; mumps_par->rhs=0; mumps_par->wk_user=0;
         mumps_par->redrhs=0;
-        mumps_par->eltptr=0; mumps_par->eltvar=0; mumps_par->a_elt=0; mumps_par->perm_in=0; mumps_par->sym_perm=0; mumps_par->uns_perm=0; mumps_par->irn_loc=0;mumps_par->jcn_loc=0;mumps_par->a_loc=0; mumps_par->listvar_schur=0;mumps_par->schur=0;mumps_par->mapping=0;mumps_par->pivnul_list=0;mumps_par->colsca=0;mumps_par->rowsca=0; mumps_par->rhs_sparse=0; mumps_par->irhs_sparse=0; mumps_par->sol_loc=0; mumps_par->irhs_ptr=0; mumps_par->isol_loc=0;
+        mumps_par->eltptr=0; mumps_par->eltvar=0; mumps_par->a_elt=0; mumps_par->perm_in=0; mumps_par->sym_perm=0; mumps_par->uns_perm=0; mumps_par->irn_loc=0;mumps_par->jcn_loc=0;mumps_par->a_loc=0; mumps_par->listvar_schur=0;mumps_par->schur=0;mumps_par->mapping=0;mumps_par->pivnul_list=0;mumps_par->colsca=0;mumps_par->colsca_from_mumps=0;mumps_par->rowsca=0;mumps_par->colsca_from_mumps=0; mumps_par->rhs_sparse=0; mumps_par->irhs_sparse=0; mumps_par->sol_loc=0; mumps_par->irhs_ptr=0; mumps_par->isol_loc=0;
         strcpy(mumps_par->ooc_tmpdir,"NAME_NOT_INITIALIZED");
         strcpy(mumps_par->ooc_prefix,"NAME_NOT_INITIALIZED");
         strcpy(mumps_par->write_problem,"NAME_NOT_INITIALIZED");
@@ -389,14 +394,39 @@ mumps_c(MUMPS_STRUC_C * mumps_par)
     EXTRACT_POINTERS(perm_in,idummyp);
     EXTRACT_POINTERS(listvar_schur,idummyp);
     EXTRACT_POINTERS(schur,cdummyp);
-    EXTRACT_POINTERS(colsca,rdummyp);
-    EXTRACT_POINTERS(rowsca,rdummyp);
+    /* EXTRACT_POINTERS not adapted to rowsca and colsca */
+    if ( mumps_par->rowsca != 0 && mumps_par->rowsca_from_mumps == 0 )
+      {
+        /* has been changed by user and was not allocated in mumps */
+        rowsca = mumps_par-> rowsca;
+        rowsca_avail = yes;
+      }
+    else
+      {
+        /* Note: changing rowsca in C after an earlier call
+           where rowsca was computed by mumps is not possible */
+        rowsca = rdummyp;
+        rowsca_avail = no;
+      }
+    if ( mumps_par->colsca != 0 && mumps_par->colsca_from_mumps == 0 )
+      /* has been changed by user and was not allocated in mumps */
+      {
+        colsca = mumps_par-> colsca;
+        colsca_avail = yes;
+      }
+    else
+      {
+        /* Note: changing colsca in C after an earlier call
+           where colsca was computed by mumps is not possible */
+        colsca = rdummyp;
+        colsca_avail = no;
+      }
     EXTRACT_POINTERS(rhs_sparse,cdummyp);
     EXTRACT_POINTERS(sol_loc,cdummyp);
     EXTRACT_POINTERS(irhs_sparse,idummyp);
     EXTRACT_POINTERS(isol_loc,idummyp);
     EXTRACT_POINTERS(irhs_ptr,idummyp);
-    /* printf("irn_avail,jcn_avail, rhs_avail, a_avail, eltptr_avail, eltvar_avail,a_elt_avail,perm_in_avail= %d %d %d %d %d %d %d \n", irn_avail,jcn_avail, rhs_avail, a_avail, eltptr_avail, eltvar_avail, a_elt_avail, perm_in_avail);*/
+    /* printf("irn_avail,jcn_avail, rhs_avail, a_avail, eltptr_avail, eltvar_avail,a_elt_avail,perm_in_avail= %d %d %d %d %d %d %d \n", irn_avail,jcn_avail, rhs_avail, a_avail, eltptr_avail, eltvar_avail, a_elt_avail, perm_in_avail); */
     /*
      * Extract integers (input) or pointers that are
      * always allocated (such as ICNTL, INFO, ...)
@@ -405,6 +435,9 @@ mumps_c(MUMPS_STRUC_C * mumps_par)
     /* instance_number = mumps_par->instance_number; */
     icntl = mumps_par->icntl;
     cntl = mumps_par->cntl;
+    keep = mumps_par->keep;
+    dkeep = mumps_par->dkeep;
+    keep8 = mumps_par->keep8;
     info = mumps_par->info;
     infog = mumps_par->infog;
     rinfo = mumps_par->rinfo;
@@ -420,7 +453,7 @@ mumps_c(MUMPS_STRUC_C * mumps_par)
     }
     /* Call F77 interface */
     MUMPS_F77(&(mumps_par->job), &(mumps_par->sym), &(mumps_par->par), &(mumps_par->comm_fortran),
-          &(mumps_par->n), icntl, cntl,
+          &(mumps_par->n), icntl, cntl, keep, dkeep, keep8,
           &(mumps_par->nz), irn, &irn_avail, jcn, &jcn_avail, a, &a_avail,
           &(mumps_par->nz_loc), irn_loc, &irn_loc_avail, jcn_loc, &jcn_loc_avail,
           a_loc, &a_loc_avail,
@@ -450,19 +483,27 @@ mumps_c(MUMPS_STRUC_C * mumps_par)
     );
     /*
      * mapping and pivnul_list are usually 0 except if
-     * MUMPS_AFFECT_MAPPING/MUMPS_AFFECT_PIVNUL_LIST was called.
+     * MUMPS_ASSIGN_MAPPING/MUMPS_ASSIGN_PIVNUL_LIST was called.
      */
     mumps_par->mapping=mumps_get_mapping();
     mumps_par->pivnul_list=mumps_get_pivnul_list();
     /* to get permutations computed during analysis */
     mumps_par->sym_perm=mumps_get_sym_perm();
     mumps_par->uns_perm=mumps_get_uns_perm();
-#ifdef return_scaling
     /*
-     * colsca/rowsca can either be user data or have been
-     * modified within mumps by calls to MUMPS_AFFECT_COLSCA/ROWSCA.
+     * colsca/rowsca can either be user data or have been modified
+     * within mumps by calls to MUMPS_ASSIGN_COLSCA and/or
+     * MUMPS_ASSIGN_ROWSCA. In all cases their address is contained
+     * in MUMPS_COLSCA_STATIC and/or MUMPS_ROWSCA_STATIC
      */
-    if (colsca_avail == no) mumps_par->colsca = MUMPS_COLSCA_STATIC;
-    if (rowsca_avail == no) mumps_par->rowsca = MUMPS_ROWSCA_STATIC;
-#endif
+    if (rowsca_avail == no && MUMPS_ROWSCA_STATIC) {
+      /* rowsca was set by MUMPS */
+      mumps_par->rowsca = MUMPS_ROWSCA_STATIC;
+      mumps_par->rowsca_from_mumps=1;
+    }
+    if (colsca_avail == no && MUMPS_COLSCA_STATIC) {
+      /* rowsca was set by MUMPS */
+      mumps_par->colsca = MUMPS_COLSCA_STATIC;
+      mumps_par->colsca_from_mumps=1;
+    }
 }

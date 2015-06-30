@@ -1,5 +1,6 @@
 #
-#  This file is part of MUMPS 4.10.0, built on Tue May 10 12:56:32 UTC 2011
+#  This file is part of MUMPS 5.0.0, released
+#  on Fri Feb 20 08:19:56 UTC 2015
 #
 topdir = ..
 libdir = $(topdir)/lib
@@ -9,12 +10,12 @@ default: d
 .PHONY: default all s d c z clean
 .SECONDEXPANSION:
 
-all:	s d c z
+all:	c z s d
 
-s:	ssimpletest
-d:	dsimpletest c_example
 c:	csimpletest
 z:	zsimpletest
+s:	ssimpletest
+d:	dsimpletest c_example
 
 
 include $(topdir)/Makefile.inc
@@ -54,28 +55,28 @@ c_example:	$(LIBDMUMPS) $$@.o
 .F.o:
 	$(FC) $(OPTF) $(INCS) -I. -I$(topdir)/include -c $*.F $(OUTF)$*.o
 .c.o:
-	$(CC) $(OPTC) $(INCS) -I. -I$(topdir)/include -c $*.c $(OUTC)$*.o
+	$(CC) $(OPTC) $(INCS) $(CDEFS) -I. -I$(topdir)/include -I$(topdir)/src -c $*.c $(OUTC)$*.o
 
 
 $(libdir)/libsmumps$(PLAT)$(LIBEXT):
 	@echo 'Error: you should build the library' $@ 'first'
-	exit -1
+	exit 1
 
 $(libdir)/libdmumps$(PLAT)$(LIBEXT):
 	@echo 'Error: you should build the library' $@ 'first'
-	exit -1
+	exit 1
 
 $(libdir)/libcmumps$(PLAT)$(LIBEXT):
 	@echo 'Error: you should build the library' $@ 'first'
-	exit -1
+	exit 1
 
 $(libdir)/libzmumps$(PLAT)$(LIBEXT):
 	@echo 'Error: you should build the library' $@ 'first'
-	exit -1
+	exit 1
 
 $(LIBMUMPS_COMMON):
 	@echo 'Error: you should build the library' $@ 'first'
-	exit -1
+	exit 1
 
 clean:
 	$(RM) *.o [sdcz]simpletest c_example

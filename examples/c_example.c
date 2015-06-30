@@ -1,6 +1,7 @@
 /*
  *
- *  This file is part of MUMPS 4.10.0, built on Tue May 10 12:56:32 UTC 2011
+ *  This file is part of MUMPS 5.0.0, released
+ *  on Fri Feb 20 08:19:56 UTC 2015
  *
  */
 /* Example program using the C interface to the 
@@ -40,14 +41,14 @@ int main(int argc, char ** argv)
 {
 #endif
   DMUMPS_STRUC_C id;
-  int n = 2;
-  int nz = 2;
-  int irn[] = {1,2};
-  int jcn[] = {1,2};
+  MUMPS_INT n = 2;
+  MUMPS_INT nz = 2;
+  MUMPS_INT irn[] = {1,2};
+  MUMPS_INT jcn[] = {1,2};
   double a[2];
   double rhs[2];
 
-  int myid, ierr;
+  MUMPS_INT myid, ierr;
 #if defined(MAIN_COMP)
   argv = &name;
 #endif

@@ -1,50 +1,51 @@
 /*
  *
- *  This file is part of MUMPS 4.10.0, built on Tue May 10 12:56:32 UTC 2011
+ *  This file is part of MUMPS 5.0.0, released
+ *  on Fri Feb 20 08:19:56 UTC 2015
  *
  *
- *  This version of MUMPS is provided to you free of charge. It is public
- *  domain, based on public domain software developed during the Esprit IV
- *  European project PARASOL (1996-1999). Since this first public domain
- *  version in 1999, research and developments have been supported by the
- *  following institutions: CERFACS, CNRS, ENS Lyon, INPT(ENSEEIHT)-IRIT,
- *  INRIA, and University of Bordeaux.
+ *  Copyright 1991-2015 CERFACS, CNRS, ENS Lyon, INP Toulouse, Inria,
+ *  University of Bordeaux.
  *
- *  The MUMPS team at the moment of releasing this version includes
- *  Patrick Amestoy, Maurice Bremond, Alfredo Buttari, Abdou Guermouche,
- *  Guillaume Joslin, Jean-Yves L'Excellent, Francois-Henry Rouet, Bora
- *  Ucar and Clement Weisbecker.
+ *  This version of MUMPS is provided to you free of charge. It is
+ *  released under the CeCILL-C license,
+ *  http://www.cecill.info/licences/Licence_CeCILL-C_V1-en.html, 
+ *  except for the external and optional ordering PORD, 
+ *  in separate directory PORD, which is public domain (see PORD/README).
  *
- *  We are also grateful to Emmanuel Agullo, Caroline Bousquet, Indranil
- *  Chowdhury, Philippe Combes, Christophe Daniel, Iain Duff, Vincent Espirat,
- *  Aurelia Fevre, Jacko Koster, Stephane Pralet, Chiara Puglisi, Gregoire
- *  Richard, Tzvetomila Slavova, Miroslav Tuma and Christophe Voemel who
- *  have been contributing to this project.
- *
- *  Up-to-date copies of the MUMPS package can be obtained
- *  from the Web pages:
- *  http://mumps.enseeiht.fr/  or  http://graal.ens-lyon.fr/MUMPS
- *
- *
- *   THIS MATERIAL IS PROVIDED AS IS, WITH ABSOLUTELY NO WARRANTY
- *   EXPRESSED OR IMPLIED. ANY USE IS AT YOUR OWN RISK.
- *
- *
- *  User documentation of any code that uses this software can
- *  include this complete notice. You can acknowledge (using
- *  references [1] and [2]) the contribution of this package
- *  in any scientific publication dependent upon the use of the
- *  package. You shall use reasonable endeavours to notify
- *  the authors of the package of this publication.
+ *  You can acknowledge (using references [1] and [2]) the contribution of
+ *  this package in any scientific publication dependent upon the use of
+ *  the package. Please use reasonable endeavours to notify the authors
+ *  of the package of this publication.
  *
  *   [1] P. R. Amestoy, I. S. Duff, J. Koster and  J.-Y. L'Excellent,
  *   A fully asynchronous multifrontal solver using distributed dynamic
  *   scheduling, SIAM Journal of Matrix Analysis and Applications,
  *   Vol 23, No 1, pp 15-41 (2001).
  *
- *   [2] P. R. Amestoy and A. Guermouche and J.-Y. L'Excellent and
+ *   [2] P. R. Amestoy, A. Guermouche, J.-Y. L'Excellent and
  *   S. Pralet, Hybrid scheduling for the parallel solution of linear
  *   systems. Parallel Computing Vol 32 (2), pp 136-156 (2006).
+ *
+ *  As a counterpart to the access to the source code and rights to copy,
+ *  modify and redistribute granted by the license, users are provided only
+ *  with a limited warranty  and the software's author,  the holder of the
+ *  economic rights,  and the successive licensors  have only  limited
+ *  liability. 
+ *
+ *  In this respect, the user's attention is drawn to the risks associated
+ *  with loading,  using,  modifying and/or developing or reproducing the
+ *  software by the user in light of its specific status of free software,
+ *  that may mean  that it is complicated to manipulate,  and  that  also
+ *  therefore means  that it is reserved for developers  and  experienced
+ *  professionals having in-depth computer knowledge. Users are therefore
+ *  encouraged to load and test the software's suitability as regards their
+ *  requirements in conditions enabling the security of their systems and/or 
+ *  data to be ensured and,  more generally, to use and operate it in the 
+ *  same conditions as regards security. 
+ *
+ *  The fact that you are presently reading this means that you have had
+ *  knowledge of the CeCILL-C license and that you accept its terms.
  *
  */
 /*
@@ -52,15 +53,16 @@
  * At the moment, PORD (J. Schulze) and SCOTCH are interfaced.
  */
 #include "mumps_orderings.h"
+#include "mumps_c_types.h"
 #if defined(pord)
 /* Interface to PORD */
 /*int mumps_pord( int, int, int *, int *, int * );
 #define MUMPS_PORDF   \
 F_SYMBOL(pordf,PORDF)*/
 void MUMPS_CALL
-MUMPS_PORDF( int *nvtx, int *nedges,
-             int *xadj, int *adjncy,
-             int *nv, int *ncmpa )
+MUMPS_PORDF( MUMPS_INT *nvtx, MUMPS_INT *nedges,
+             MUMPS_INT *xadj, MUMPS_INT *adjncy,
+             MUMPS_INT *nv, MUMPS_INT *ncmpa )
 {
     *ncmpa = mumps_pord( *nvtx, *nedges, xadj, adjncy, nv );
 }
@@ -69,9 +71,9 @@ MUMPS_PORDF( int *nvtx, int *nedges,
 #define MUMPS_PORDF_WND           \
     F_SYMBOL(pordf_wnd,PORDF_WND)*/
 void MUMPS_CALL
-MUMPS_PORDF_WND( int *nvtx, int *nedges,
-                 int *xadj, int *adjncy,
-                 int *nv, int *ncmpa, int *totw )
+MUMPS_PORDF_WND( MUMPS_INT *nvtx, MUMPS_INT *nedges,
+                 MUMPS_INT *xadj, MUMPS_INT *adjncy,
+                 MUMPS_INT *nv, MUMPS_INT *ncmpa, MUMPS_INT *totw )
 {
     *ncmpa = mumps_pord_wnd( *nvtx, *nedges, xadj, adjncy, nv, totw );
 }
@@ -83,13 +85,13 @@ MUMPS_PORDF_WND( int *nvtx, int *nedges,
         But, if uncommetnted a bug occurs in psl_ma41_analysi.F
 ******************************************************************/
 /*********************************************************/
-int mumps_pord
+MUMPS_INT mumps_pord
 (
-   int nvtx,
-   int nedges,
-   int *xadj_pe,
-   int *adjncy,
-   int *nv
+   MUMPS_INT nvtx,
+   MUMPS_INT nedges,
+   MUMPS_INT *xadj_pe,
+   MUMPS_INT *adjncy,
+   MUMPS_INT *nv
 )
 {
 /**********************************
@@ -113,8 +115,8 @@ ouput:
   options_t  options[] = { SPACE_ORDTYPE, SPACE_NODE_SELECTION1,
                     SPACE_NODE_SELECTION2, SPACE_NODE_SELECTION3,
                     SPACE_DOMAIN_SIZE, 0 };
-  int *ncolfactor, *ncolupdate, *parent, *vtx2front;
-  int *first, *link, nfronts, J, K, u, vertex, vertex_root, count;
+  MUMPS_INT *ncolfactor, *ncolupdate, *parent, *vtx2front;
+  MUMPS_INT *first, *link, nfronts, J, K, u, vertex, vertex_root, count;
       /**************************************************
        declaration to uncomment if printing ordering
       ***************************************************
@@ -135,7 +137,7 @@ ouput:
    mymalloc(G, 1, graph_t);
    G->xadj   = xadj_pe;
    G->adjncy = adjncy;
-   mymalloc(G->vwght, nvtx, int);
+   mymalloc(G->vwght, nvtx, MUMPS_INT);
    G->nvtx = nvtx;
    G->nedges = nedges;
    G->type = UNWEIGHTED;
@@ -153,8 +155,8 @@ ouput:
     /* -----------------------------------------------------------
      store the vertices/columns of a front in a bucket structure
      ----------------------------------------------------------- */
-   mymalloc(first, nfronts, int);
-   mymalloc(link, nvtx, int);
+   mymalloc(first, nfronts, MUMPS_INT);
+   mymalloc(link, nvtx, MUMPS_INT);
    for (J = 0; J < nfronts; J++)
       first[J] = -1;
    for (u = nvtx-1; u >= 0; u--)
@@ -201,14 +203,14 @@ ouput:
   return (0);
 }
 /*********************************************************/
-int mumps_pord_wnd
+MUMPS_INT mumps_pord_wnd
 (
-        int nvtx,
-        int nedges,
-        int *xadj_pe,
-        int *adjncy,
-        int *nv,
-        int *totw
+        MUMPS_INT nvtx,
+        MUMPS_INT nedges,
+        MUMPS_INT *xadj_pe,
+        MUMPS_INT *adjncy,
+        MUMPS_INT *nv,
+        MUMPS_INT *totw
 )
 {
 /**********************************
@@ -234,8 +236,8 @@ ouput:
         options_t  options[] = { SPACE_ORDTYPE, SPACE_NODE_SELECTION1,
                     SPACE_NODE_SELECTION2, SPACE_NODE_SELECTION3,
                     SPACE_DOMAIN_SIZE, 0 };
-        int *ncolfactor, *ncolupdate, *parent, *vtx2front;
-        int *first, *link, nfronts, J, K, u, vertex, vertex_root, count;
+        MUMPS_INT *ncolfactor, *ncolupdate, *parent, *vtx2front;
+        MUMPS_INT *first, *link, nfronts, J, K, u, vertex, vertex_root, count;
       /**************************************************
        declaration to uncomment if printing ordering
       ***************************************************
@@ -256,7 +258,7 @@ ouput:
         mymalloc(G, 1, graph_t);
         G->xadj  = xadj_pe;
         G->adjncy= adjncy;
-        mymalloc(G->vwght, nvtx, int);
+        mymalloc(G->vwght, nvtx, MUMPS_INT);
         G->nvtx = nvtx;
         G->nedges = nedges;
         G->type = WEIGHTED;
@@ -274,8 +276,8 @@ ouput:
     /* -----------------------------------------------------------
      store the vertices/columns of a front in a bucket structure
      ----------------------------------------------------------- */
-        mymalloc(first, nfronts, int);
-        mymalloc(link, nvtx, int);
+        mymalloc(first, nfronts, MUMPS_INT);
+        mymalloc(link, nvtx, MUMPS_INT);
         for (J = 0; J < nfronts; J++)
           first[J] = -1;
         for (u = nvtx-1; u >= 0; u--)
@@ -331,16 +333,16 @@ ouput:
 /*#define MUMPS_SCOTCH    \
   F_SYMBOL(scotch,SCOTCH)*/
 void MUMPS_CALL
-MUMPS_SCOTCH( const int * const  n,
-              const int * const  iwlen,
-              int * const        petab,
-              const int * const  pfree,
-              int * const        lentab,
-              int * const        iwtab,
-              int * const        nvtab,
-              int * const        elentab,
-              int * const        lasttab,
-              int * const        ncmpa )
+MUMPS_SCOTCH( const MUMPS_INT * const  n,
+              const MUMPS_INT * const  iwlen,
+              MUMPS_INT * const        petab,
+              const MUMPS_INT * const  pfree,
+              MUMPS_INT * const        lentab,
+              MUMPS_INT * const        iwtab,
+              MUMPS_INT * const        nvtab,
+              MUMPS_INT * const        elentab,
+              MUMPS_INT * const        lasttab,
+              MUMPS_INT * const        ncmpa )
 {
      *ncmpa = esmumps( *n, *iwlen, petab, *pfree,
                        lentab, iwtab, nvtab, elentab, lasttab );
@@ -362,16 +364,27 @@ MUMPS_DGRAPHINIT(SCOTCH_Dgraph *graphptr, MPI_Fint *comm, MPI_Fint *ierr)
   return;
 }
 #endif
-#if defined(parmetis)
+#if defined(parmetis) || defined(parmetis3)
+/*PARMETIS*/
+#include "parmetis.h"
 void MUMPS_CALL
-MUMPS_PARMETIS(int *first,      int *vertloctab, 
-               int *edgeloctab, int *numflag, 
-               int *options,    int *order, 
-               int *sizes,      int *comm)
+MUMPS_PARMETIS(MUMPS_INT *first,      MUMPS_INT *vertloctab, 
+               MUMPS_INT *edgeloctab, MUMPS_INT *numflag, 
+               MUMPS_INT *options,    MUMPS_INT *order, 
+               MUMPS_INT *sizes,      MUMPS_INT *comm,
+               MUMPS_INT *ierr)
 {
   MPI_Comm  int_comm;
+  int iierr;
   int_comm = MPI_Comm_f2c(*comm);
+#if defined(parmetis)
+  *ierr=0;
+  iierr=ParMETIS_V3_NodeND(first, vertloctab, edgeloctab, numflag, options, order, sizes, &int_comm);
+  if(iierr != METIS_OK)
+    *ierr=1;
+#else
   ParMETIS_V3_NodeND(first, vertloctab, edgeloctab, numflag, options, order, sizes, &int_comm);
+#endif
   return;
 }
 #endif

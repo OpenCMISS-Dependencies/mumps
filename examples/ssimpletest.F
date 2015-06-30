@@ -1,5 +1,6 @@
 C
-C  This file is part of MUMPS 4.10.0, built on Tue May 10 12:56:32 UTC 2011
+C  This file is part of MUMPS 5.0.0, released
+C  on Fri Feb 20 08:19:56 UTC 2015
 C
       PROGRAM MUMPS_TEST
       IMPLICIT NONE
@@ -16,6 +17,12 @@ C  for L U factorization (sym = 0, with working host)
       mumps_par%SYM = 0
       mumps_par%PAR = 1
       CALL SMUMPS(mumps_par)
+      IF (mumps_par%INFOG(1).LT.0) THEN
+       WRITE(6,'(A,A,I6,A,I9)') " ERROR RETURN: ",
+     &            "  mumps_par%INFOG(1)= ", mumps_par%INFOG(1), 
+     &            "  mumps_par%INFOG(2)= ", mumps_par%INFOG(2) 
+       GOTO 500
+      END IF
 C  Define problem on the host (processor 0)
       IF ( mumps_par%MYID .eq. 0 ) THEN
         READ(5,*) mumps_par%N
@@ -34,6 +41,12 @@ C  Define problem on the host (processor 0)
 C  Call package for solution
       mumps_par%JOB = 6
       CALL SMUMPS(mumps_par)
+      IF (mumps_par%INFOG(1).LT.0) THEN
+       WRITE(6,'(A,A,I6,A,I9)') " ERROR RETURN: ",
+     &            "  mumps_par%INFOG(1)= ", mumps_par%INFOG(1), 
+     &            "  mumps_par%INFOG(2)= ", mumps_par%INFOG(2) 
+       GOTO 500
+      END IF
 C  Solution has been assembled on the host
       IF ( mumps_par%MYID .eq. 0 ) THEN
         WRITE( 6, * ) ' Solution is ',(mumps_par%RHS(I),I=1,mumps_par%N)
@@ -48,6 +61,12 @@ C  Deallocate user data
 C  Destroy the instance (deallocate internal data structures)
       mumps_par%JOB = -2
       CALL SMUMPS(mumps_par)
-      CALL MPI_FINALIZE(IERR)
+      IF (mumps_par%INFOG(1).LT.0) THEN
+       WRITE(6,'(A,A,I6,A,I9)') " ERROR RETURN: ",
+     &            "  mumps_par%INFOG(1)= ", mumps_par%INFOG(1), 
+     &            "  mumps_par%INFOG(2)= ", mumps_par%INFOG(2) 
+       GOTO 500
+      END IF
+ 500  CALL MPI_FINALIZE(IERR)
       STOP
       END

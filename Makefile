@@ -1,26 +1,27 @@
 #
-#  This file is part of MUMPS 4.10.0, built on Tue May 10 12:56:32 UTC 2011
+#  This file is part of MUMPS 5.0.0, released
+#  on Fri Feb 20 08:19:56 UTC 2015
 #
 topdir = .
 libdir = $(topdir)/lib
 
 default:	dexamples
 
-.PHONY: default alllib all s d c z \
+.PHONY: default alllib all c z s d \
 	sexamples dexamples cexamples zexamples \
 	mumps_lib requiredobj libseqneeded clean
 
-alllib:		s d c z
-all:		sexamples dexamples cexamples zexamples
+alllib:		c z s d
+all:		cexamples zexamples sexamples dexamples
 
-s:
-	$(MAKE) ARITH=s mumps_lib
-d:
-	$(MAKE) ARITH=d mumps_lib
 c:
 	$(MAKE) ARITH=c mumps_lib
 z:
 	$(MAKE) ARITH=z mumps_lib
+s:
+	$(MAKE) ARITH=s mumps_lib
+d:
+	$(MAKE) ARITH=d mumps_lib
 
 
 # Is Makefile.inc available ?
@@ -38,18 +39,17 @@ include Makefile.inc
 mumps_lib: requiredobj
 	(cd src ; $(MAKE) $(ARITH))
 
-sexamples:	s
-	(cd examples ; $(MAKE) s)
-
-dexamples:	d
-	(cd examples ; $(MAKE) d)
-
 cexamples:	c
 	(cd examples ; $(MAKE) c)
 
 zexamples:	z
 	(cd examples ; $(MAKE) z)
 
+sexamples:	s
+	(cd examples ; $(MAKE) s)
+
+dexamples:	d
+	(cd examples ; $(MAKE) d)
 
 requiredobj: Makefile.inc $(LIBSEQNEEDED) $(libdir)/libpord$(PLAT)$(LIBEXT)
 
@@ -62,7 +62,7 @@ libseqneeded:
 $(libdir)/libpord$(PLAT)$(LIBEXT):
 	if [ "$(LPORDDIR)" != "" ] ; then \
 	  cd $(LPORDDIR); \
-	  $(MAKE) CC="$(CC)" CFLAGS="$(OPTC)" AR="$(AR)" RANLIB="$(RANLIB)" OUTC=$(OUTC) LIBEXT=$(LIBEXT); \
+	  $(MAKE) CC="$(CC)" CFLAGS="$(OPTC)" AR="$(AR)" RANLIB="$(RANLIB)" OUTC="$(OUTC)" LIBEXT=$(LIBEXT); \
 	fi;
 	if [ "$(LPORDDIR)" != "" ] ; then \
 	  cp $(LPORDDIR)/libpord$(LIBEXT) $@; \
@@ -73,7 +73,7 @@ clean:
 	(cd examples; $(MAKE) clean)
 	(cd $(libdir); $(RM) *$(PLAT)$(LIBEXT))
 	(cd libseq; $(MAKE) clean)
-	if [ $(LPORDDIR) != "" ] ; then \
+	if [ "$(LPORDDIR)" != "" ] ; then \
 	  cd $(LPORDDIR); $(MAKE) realclean; \
         fi;
 
