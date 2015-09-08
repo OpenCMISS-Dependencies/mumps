@@ -15,12 +15,6 @@ set(FORTRAN_MANGLING Add_ CACHE STRING "${PROJECT_NAME} - Fortran mangling schem
 set(BUILD_PRECISION sdcz CACHE STRING "${PROJECT_NAME} - Build precisions (sdcz)")
 
 find_package(MPI REQUIRED)
-if (MPI_C_COMPILER)
-    SET(CMAKE_C_COMPILER ${MPI_C_COMPILER})
-endif()
-if (MPI_Fortran_COMPILER)
-    SET(CMAKE_Fortran_COMPILER ${MPI_Fortran_COMPILER})
-endif()
 find_package(BLAS ${BLAS_VERSION} REQUIRED)
 find_package(LAPACK ${LAPACK_VERSION} REQUIRED)
 find_package(SCALAPACK ${SCALAPACK_VERSION} REQUIRED)
@@ -169,7 +163,7 @@ set(mumps-src-arith
     tools.F
     type3_root.F
 )
-ADD_LIBRARY(mumps_common ${mumps-src})
+add_library(mumps_common ${mumps-src})
 target_link_libraries(mumps_common PUBLIC blas scalapack pord
     $<$<BOOL:${USE_PTSCOTCH}>:ptesmumps>
     $<$<BOOL:${USE_SCOTCH}>:esmumps>
@@ -191,7 +185,7 @@ elseif(USE_METIS)
 endif()
 
 # Build objects for each precision and combine them into the later mumps target
-SET(PREC_LIBS )
+set(PREC_LIBS )
 foreach(prec s d c z)
     if(BUILD_PRECISION MATCHES [${prec}])
         message(STATUS "Building precision '${prec}'")
@@ -200,7 +194,7 @@ foreach(prec s d c z)
         foreach(entry ${mumps-src-arith})
             list(APPEND mumps-src-arith-${prec} src/${prec}${entry})
         endforeach()
-        ADD_LIBRARY(${prec}mumps ${mumps-src-arith-${prec}} src/mumps_c.c)
+        add_library(${prec}mumps ${mumps-src-arith-${prec}} src/mumps_c.c)
         set_target_properties(${prec}mumps PROPERTIES
             OUTPUT_NAME ${prec}mumps-${MUMPS_VERSION})
         target_link_libraries(${prec}mumps PUBLIC mumps_common pord)
