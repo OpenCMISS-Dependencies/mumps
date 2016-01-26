@@ -13,6 +13,11 @@ option(USE_SCOTCH "${PROJECT_NAME} - Use Scotch" OFF)
 option(USE_PTSCOTCH "${PROJECT_NAME} - Use PT-Scotch" ON)
 set(FORTRAN_MANGLING Add_ CACHE STRING "${PROJECT_NAME} - Fortran mangling scheme")
 set(BUILD_PRECISION sdcz CACHE STRING "${PROJECT_NAME} - Build precisions (sdcz)")
+# The code implements "UPPER" as mangling definition - we use UpCase as this
+# is most common.
+if (FORTRAN_MANGLING STREQUAL UpCase)
+    set(FORTRAN_MANGLING UPPER)
+endif()
 
 find_package(MPI REQUIRED)
 find_package(BLAS ${BLAS_VERSION} REQUIRED)
@@ -39,7 +44,7 @@ SET(CMAKE_Fortran_MODULE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/fortran_modules)
 add_subdirectory(PORD)
 
 # collect mumps_common sources
-SET(mumps-src
+set(mumps-src-f
     src/ana_AMDMF.F
     src/ana_omp_m.F
     src/ana_orderings.F
@@ -53,19 +58,11 @@ SET(mumps-src
     src/fac_ibct_data_m.F
     src/fac_maprow_data_m.F
     src/front_data_mgt_m.F
-    src/mumps_common.c
     src/mumps_comm_ibcast.F
-	src/mumps_io.c
-    src/mumps_io_basic.c
-    src/mumps_io_thread.c
-    src/mumps_io_err.c
 	src/mumps_l0_omp_m.F
-	src/mumps_numa.c
 	src/mumps_ooc_common.F
-    src/mumps_orderings.c
     src/mumps_ooc_common.F
     src/mumps_print_defined.F
-    src/mumps_size.c
     src/mumps_sol_es.F
     src/mumps_static_mapping.F
 	src/mumps_type_size.F
@@ -74,6 +71,16 @@ SET(mumps-src
 	src/omp_tps_common_m.F
 	src/tools_common.F
 	src/tools_common_mod.F
+)
+set(mumps-src-c
+    src/mumps_common.c
+	src/mumps_io.c
+    src/mumps_io_basic.c
+    src/mumps_io_thread.c
+    src/mumps_io_err.c
+	src/mumps_numa.c
+    src/mumps_orderings.c
+    src/mumps_size.c
 )
 
 set(mumps-src-arith
@@ -163,26 +170,33 @@ set(mumps-src-arith
     tools.F
     type3_root.F
 )
-add_library(mumps_common ${mumps-src})
-target_link_libraries(mumps_common PUBLIC blas scalapack pord
-    $<$<BOOL:${USE_PTSCOTCH}>:ptesmumps>
-    $<$<BOOL:${USE_SCOTCH}>:esmumps>
-)
-target_compile_definitions(mumps_common PRIVATE ${FORTRAN_MANGLING} pord) 
-set_target_properties(mumps_common PROPERTIES OUTPUT_NAME mumps_common-${MUMPS_VERSION})
-TARGET_INCLUDE_DIRECTORIES(mumps_common PRIVATE include PORD/include)
-if (USE_PTSCOTCH)
-    target_compile_definitions(mumps_common PRIVATE ptscotch)
-elseif(USE_SCOTCH)
-    target_compile_definitions(mumps_common PRIVATE scotch)
-endif()
-if (USE_PARMETIS)
-    target_compile_definitions(mumps_common PRIVATE parmetis)
-    target_link_libraries(mumps_common PUBLIC parmetis)
-elseif(USE_METIS)
-    target_compile_definitions(mumps_common PRIVATE metis)
-    target_link_libraries(mumps_common PUBLIC metis)
-endif()
+
+foreach(lang f c)
+    # Need to split c and fortran sources for VS
+    add_library(mumps_common_${lang} ${mumps-src-${lang}})
+    target_link_libraries(mumps_common_${lang} PUBLIC blas scalapack pord)
+    target_include_directories(mumps_common_${lang} PRIVATE include PORD/include)
+    target_compile_definitions(mumps_common_${lang} PRIVATE pord ${FORTRAN_MANGLING})
+    if (USE_PTSCOTCH)
+        target_compile_definitions(mumps_common_${lang} PRIVATE ptscotch)
+        target_link_libraries(mumps_common_${lang} PUBLIC ptesmumps)
+    elseif(USE_SCOTCH)
+        target_compile_definitions(mumps_common_${lang} PRIVATE scotch)
+        target_link_libraries(mumps_common_${lang} PUBLIC esmumps)
+    endif()
+    if (USE_PARMETIS)
+        target_compile_definitions(mumps_common_${lang} PRIVATE parmetis)
+        target_link_libraries(mumps_common_${lang} PUBLIC parmetis)
+    elseif(USE_METIS)
+        target_compile_definitions(mumps_common_${lang} PRIVATE metis)
+        target_link_libraries(mumps_common_${lang} PUBLIC metis)
+    endif()
+endforeach()
+
+# Interface library
+add_library(mumps_common INTERFACE)
+target_link_libraries(mumps_common INTERFACE mumps_common_f mumps_common_c)
+#set_target_properties(mumps_common PROPERTIES OUTPUT_NAME mumps_common-${MUMPS_VERSION})
 
 # Build objects for each precision and combine them into the later mumps target
 set(PREC_LIBS )
@@ -194,14 +208,16 @@ foreach(prec s d c z)
         foreach(entry ${mumps-src-arith})
             list(APPEND mumps-src-arith-${prec} src/${prec}${entry})
         endforeach()
-        add_library(${prec}mumps ${mumps-src-arith-${prec}} src/mumps_c.c)
+        
+        # Arithmetic-dependent mumps f libraries
+        add_library(${prec}mumps ${mumps-src-arith-${prec}})
         set_target_properties(${prec}mumps PROPERTIES
             OUTPUT_NAME ${prec}mumps-${MUMPS_VERSION})
-        target_link_libraries(${prec}mumps PUBLIC mumps_common pord)
+        target_link_libraries(${prec}mumps PUBLIC mumps_common)
         target_compile_definitions(${prec}mumps PRIVATE
-             ${FORTRAN_MANGLING}
-             MUMPS_ARITH=MUMPS_ARITH_${prec}
-             pord)
+            MUMPS_ARITH=MUMPS_ARITH_${prec}
+            pord
+        )
         if (USE_PARMETIS)
             target_compile_definitions(${prec}mumps PRIVATE parmetis)
             target_link_libraries(${prec}mumps PUBLIC parmetis)
@@ -216,8 +232,22 @@ foreach(prec s d c z)
             target_compile_definitions(${prec}mumps PRIVATE scotch)
             target_link_libraries(${prec}mumps PUBLIC scotch esmumps)
         endif()
-        list(APPEND PREC_LIBS ${prec}mumps)
-        TARGET_INCLUDE_DIRECTORIES(${prec}mumps PRIVATE 
+        
+        # Arithmetic-dependent mumps c libraries
+        add_library(${prec}mumps_c src/mumps_c.c)
+        target_link_libraries(${prec}mumps_c PUBLIC mumps_common ${prec}mumps)
+        target_include_directories(${prec}mumps_c PRIVATE 
+            include PORD/include
+        )
+        #target_link_libraries(${prec}mumps_c PRIVATE mumps_common)
+        target_compile_definitions(${prec}mumps_c PRIVATE
+            MUMPS_ARITH=MUMPS_ARITH_${prec}
+            ${FORTRAN_MANGLING}
+            pord
+        )
+        
+        list(APPEND PREC_LIBS ${prec}mumps ${prec}mumps_c)
+        target_include_directories(${prec}mumps PRIVATE 
             include PORD/include
         )
         # Make sure the according header files are installed
@@ -230,7 +260,7 @@ endforeach()
 add_library(mumps INTERFACE)
 target_link_libraries(mumps INTERFACE mumps_common ${PREC_LIBS} pord)
 
-install(TARGETS mumps_common mumps ${PREC_LIBS} EXPORT mumps-config
+install(TARGETS mumps_common mumps_common_c mumps_common_f mumps ${PREC_LIBS} EXPORT mumps-config
     DESTINATION lib
     INCLUDES DESTINATION include/mumps)
 # common headers

@@ -30,16 +30,8 @@ endif()
 # C test
 add_executable(ctest c_example.c)
 target_compile_definitions(ctest PRIVATE ${FORTRAN_MANGLING})
-target_include_directories(ctest PRIVATE 
-    ../include
-    #${MPI_C_INCLUDE_PATH} ${MPI_Fortran_INCLUDE_PATH}
-)
-target_link_libraries(ctest PRIVATE
-    dmumps mumps_common
-    #$<$<BOOL:${OCM_USE_METIS}>:metis>
-    #$<$<BOOL:${OCM_USE_PARMETIS}>:parmetis>
-    #${MPI_C_LIBRARIES} ${MPI_Fortran_LIBRARIES}
-)
+target_include_directories(ctest PRIVATE ../include)
+target_link_libraries(ctest PRIVATE mumps)
 add_test(c_test ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/ctest)
 add_test(c_test_par ${MPIEXEC} 
     ${MPIEXEC_NUMPROC_FLAG} ${SYSTEM_PROCESSOR_COUNT}
