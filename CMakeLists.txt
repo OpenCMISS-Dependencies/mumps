@@ -1,7 +1,7 @@
-CMAKE_MINIMUM_REQUIRED(VERSION 3.3)
+cmake_minimum_required(VERSION 3.3)
 
 project(MUMPS VERSION 5.0.0 LANGUAGES C Fortran)
-SET(CMAKE_NO_SYSTEM_FROM_IMPORTED YES)
+set(CMAKE_NO_SYSTEM_FROM_IMPORTED YES)
 
 option(BUILD_TESTS "${PROJECT_NAME} - Build tests" ON)
 option(PACKAGE_CONFIG_DIR "Directory for package config files (relative to CMAKE_INSTALL_PREFIX)" "lib/cmake")
@@ -19,10 +19,10 @@ if (FORTRAN_MANGLING STREQUAL UpCase)
     set(FORTRAN_MANGLING UPPER)
 endif()
 
-find_package(MPI REQUIRED)
 find_package(BLAS ${BLAS_VERSION} REQUIRED)
 find_package(LAPACK ${LAPACK_VERSION} REQUIRED)
 find_package(SCALAPACK ${SCALAPACK_VERSION} REQUIRED)
+find_package(MPI REQUIRED)
 
 if (USE_PARMETIS)
     message(STATUS "Use of MUMPS with ParMETIS requested. Looking for library...")
@@ -39,7 +39,7 @@ elseif(USE_SCOTCH)
     find_package(SCOTCH ${SCOTCH_VERSION} REQUIRED)
 endif()
 
-SET(CMAKE_Fortran_MODULE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/fortran_modules)
+set(CMAKE_Fortran_MODULE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/fortran_modules)
 
 add_subdirectory(PORD)
 
@@ -174,9 +174,9 @@ set(mumps-src-arith
 foreach(lang f c)
     # Need to split c and fortran sources for VS
     add_library(mumps_common_${lang} ${mumps-src-${lang}})
-    target_link_libraries(mumps_common_${lang} PUBLIC blas scalapack pord)
-    target_include_directories(mumps_common_${lang} PRIVATE include PORD/include)
-    target_compile_definitions(mumps_common_${lang} PRIVATE pord ${FORTRAN_MANGLING})
+    target_link_libraries(mumps_common_${lang} PUBLIC scalapack pord)
+    target_include_directories(mumps_common_${lang} PRIVATE include)
+    target_compile_definitions(mumps_common_${lang} PRIVATE ${FORTRAN_MANGLING})
     if (USE_PTSCOTCH)
         target_compile_definitions(mumps_common_${lang} PRIVATE ptscotch)
         target_link_libraries(mumps_common_${lang} PUBLIC ptesmumps)
@@ -213,10 +213,10 @@ foreach(prec s d c z)
         add_library(${prec}mumps ${mumps-src-arith-${prec}})
         set_target_properties(${prec}mumps PROPERTIES
             OUTPUT_NAME ${prec}mumps-${MUMPS_VERSION})
+        target_include_directories(${prec}mumps PRIVATE include)
         target_link_libraries(${prec}mumps PUBLIC mumps_common)
         target_compile_definitions(${prec}mumps PRIVATE
             MUMPS_ARITH=MUMPS_ARITH_${prec}
-            pord
         )
         if (USE_PARMETIS)
             target_compile_definitions(${prec}mumps PRIVATE parmetis)
@@ -236,20 +236,13 @@ foreach(prec s d c z)
         # Arithmetic-dependent mumps c libraries
         add_library(${prec}mumps_c src/mumps_c.c)
         target_link_libraries(${prec}mumps_c PUBLIC mumps_common ${prec}mumps)
-        target_include_directories(${prec}mumps_c PRIVATE 
-            include PORD/include
-        )
-        #target_link_libraries(${prec}mumps_c PRIVATE mumps_common)
+        target_include_directories(${prec}mumps_c PRIVATE include)
         target_compile_definitions(${prec}mumps_c PRIVATE
             MUMPS_ARITH=MUMPS_ARITH_${prec}
             ${FORTRAN_MANGLING}
-            pord
         )
         
         list(APPEND PREC_LIBS ${prec}mumps ${prec}mumps_c)
-        target_include_directories(${prec}mumps PRIVATE 
-            include PORD/include
-        )
         # Make sure the according header files are installed
         install(DIRECTORY include/ DESTINATION include
             FILES_MATCHING PATTERN "${prec}mu*.h")
@@ -258,7 +251,7 @@ endforeach()
 
 # Add global interface target for easy linking if the build precisions are not known.
 add_library(mumps INTERFACE)
-target_link_libraries(mumps INTERFACE mumps_common ${PREC_LIBS} pord)
+target_link_libraries(mumps INTERFACE mumps_common ${PREC_LIBS})
 
 install(TARGETS mumps_common mumps_common_c mumps_common_f mumps ${PREC_LIBS} EXPORT mumps-config
     DESTINATION lib
