@@ -19,7 +19,6 @@ if (FORTRAN_MANGLING STREQUAL UpCase)
     set(FORTRAN_MANGLING UPPER)
 endif()
 
-find_package(BLAS ${BLAS_VERSION} REQUIRED)
 find_package(LAPACK ${LAPACK_VERSION} REQUIRED)
 find_package(SCALAPACK ${SCALAPACK_VERSION} REQUIRED)
 find_package(MPI REQUIRED)
@@ -269,6 +268,8 @@ file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/mumps-config-dependencies.cmake
     "include(CMakeFindDependencyMacro)\r\n"
     	"set(${PROJECT_NAME}_IMPORT_PREFIX \${_IMPORT_PREFIX})\r\n"
 )
+file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/mumps-config-dependencies.cmake "find_dependency(LAPACK)\r\n")
+file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/mumps-config-dependencies.cmake "find_dependency(SCALAPACK)\r\n")
 if (USE_PARMETIS)
     file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/mumps-config-dependencies.cmake "find_dependency(PARMETIS)\r\n")
 elseif(USE_METIS)
