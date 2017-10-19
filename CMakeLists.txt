@@ -4,7 +4,7 @@ project(MUMPS VERSION 5.0.0 LANGUAGES C Fortran)
 set(CMAKE_NO_SYSTEM_FROM_IMPORTED YES)
 
 option(BUILD_TESTS "${PROJECT_NAME} - Build tests" ON)
-option(PACKAGE_CONFIG_DIR "Directory for package config files (relative to CMAKE_INSTALL_PREFIX)" "lib/cmake")
+set(PACKAGE_CONFIG_DIR "lib/cmake" CACHE STRING "Directory for package config files (relative to CMAKE_INSTALL_PREFIX)")
 
 # As of MUMPS 5 we can use Metis 5.1 :-)
 option(USE_METIS "${PROJECT_NAME} - Use METIS 5" OFF)
