@@ -19,6 +19,8 @@ if (FORTRAN_MANGLING STREQUAL UpCase)
     set(FORTRAN_MANGLING UPPER)
 endif()
 
+# Find BLAS separately so we can use 'blas' target.
+find_package(BLAS ${BLAS_VERSION} REQUIRED)
 find_package(LAPACK ${LAPACK_VERSION} REQUIRED)
 find_package(SCALAPACK ${SCALAPACK_VERSION} REQUIRED)
 find_package(MPI REQUIRED)
