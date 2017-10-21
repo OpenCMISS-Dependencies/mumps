@@ -24,6 +24,7 @@ find_package(BLAS ${BLAS_VERSION} REQUIRED)
 find_package(LAPACK ${LAPACK_VERSION} REQUIRED)
 find_package(SCALAPACK ${SCALAPACK_VERSION} REQUIRED)
 find_package(MPI REQUIRED)
+find_package(Threads)
 
 if (USE_PARMETIS)
     message(STATUS "Use of MUMPS with ParMETIS requested. Looking for library...")
@@ -60,26 +61,26 @@ set(mumps-src-f
     src/fac_maprow_data_m.F
     src/front_data_mgt_m.F
     src/mumps_comm_ibcast.F
-	src/mumps_l0_omp_m.F
-	src/mumps_ooc_common.F
+    src/mumps_l0_omp_m.F
+    src/mumps_ooc_common.F
     src/mumps_ooc_common.F
     src/mumps_print_defined.F
     src/mumps_sol_es.F
     src/mumps_static_mapping.F
-	src/mumps_type_size.F
+    src/mumps_type_size.F
     src/mumps_type2_blocking.F
     src/mumps_version.F
-	src/omp_tps_common_m.F
-	src/tools_common.F
-	src/tools_common_mod.F
+    src/omp_tps_common_m.F
+    src/tools_common.F
+    src/tools_common_mod.F
 )
 set(mumps-src-c
     src/mumps_common.c
-	src/mumps_io.c
+    src/mumps_io.c
     src/mumps_io_basic.c
     src/mumps_io_thread.c
     src/mumps_io_err.c
-	src/mumps_numa.c
+    src/mumps_numa.c
     src/mumps_orderings.c
     src/mumps_size.c
 )
@@ -175,6 +176,9 @@ set(mumps-src-arith
 foreach(lang f c)
     # Need to split c and fortran sources for VS
     add_library(mumps_common_${lang} ${mumps-src-${lang}})
+    if (lang STREQUAL "c")
+        target_link_libraries(mumps_common_${lang} PUBLIC Threads::Threads)
+    endif ()
     target_link_libraries(mumps_common_${lang} PUBLIC scalapack pord)
     target_include_directories(mumps_common_${lang} PRIVATE include)
     target_compile_definitions(mumps_common_${lang} PRIVATE ${FORTRAN_MANGLING})
