@@ -274,17 +274,17 @@ file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/mumps-config-dependencies.cmake
     "include(CMakeFindDependencyMacro)\r\n"
     	"set(${PROJECT_NAME}_IMPORT_PREFIX \${_IMPORT_PREFIX})\r\n"
 )
-file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/mumps-config-dependencies.cmake "find_dependency(LAPACK)\r\n")
-file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/mumps-config-dependencies.cmake "find_dependency(SCALAPACK)\r\n")
+file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/mumps-config-dependencies.cmake "set(LAPACK_FIND_SYSTEM ${LAPACK_FIND_SYSTEM})\r\nfind_dependency(LAPACK)\r\n")
+file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/mumps-config-dependencies.cmake "set(SCALAPACK_FIND_SYSTEM ${SCALAPACK_FIND_SYSTEM})\r\nfind_dependency(SCALAPACK)\r\n")
 if (USE_PARMETIS)
-    file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/mumps-config-dependencies.cmake "find_dependency(PARMETIS)\r\n")
+    file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/mumps-config-dependencies.cmake "set(PARMETIS_FIND_SYSTEM ${PARMETIS_FIND_SYSTEM})\r\nfind_dependency(PARMETIS)\r\n")
 elseif(USE_METIS)
-    file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/mumps-config-dependencies.cmake "find_dependency(METIS)\r\n")    
+    file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/mumps-config-dependencies.cmake "set(METIS_FIND_SYSTEM ${METIS_FIND_SYSTEM})\r\nfind_dependency(METIS)\r\n")
 endif()
 if (USE_PTSCOTCH)
-    file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/mumps-config-dependencies.cmake "find_dependency(PTSCOTCH)\r\n")
+    file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/mumps-config-dependencies.cmake "set(PTSCOTCH_FIND_SYSTEM ${PTSCOTCH_FIND_SYSTEM})\r\nfind_dependency(PTSCOTCH)\r\n")
 elseif(USE_SCOTCH)
-    file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/mumps-config-dependencies.cmake "find_dependency(SCOTCH)\r\n")    
+    file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/mumps-config-dependencies.cmake "set(SCOTCH_FIND_SYSTEM ${SCOTCH_FIND_SYSTEM})\r\nfind_dependency(SCOTCH)\r\n")
 endif()
 file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/mumps-config-dependencies.cmake "set(_IMPORT_PREFIX \${${PROJECT_NAME}_IMPORT_PREFIX})")
 install(FILES 
