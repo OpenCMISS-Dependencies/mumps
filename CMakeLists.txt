@@ -1,10 +1,10 @@
-CMAKE_MINIMUM_REQUIRED(VERSION 3.3)
+cmake_minimum_required(VERSION 3.3)
 
 project(MUMPS VERSION 5.0.0 LANGUAGES C Fortran)
-SET(CMAKE_NO_SYSTEM_FROM_IMPORTED YES)
+set(CMAKE_NO_SYSTEM_FROM_IMPORTED YES)
 
 option(BUILD_TESTS "${PROJECT_NAME} - Build tests" ON)
-option(PACKAGE_CONFIG_DIR "Directory for package config files (relative to CMAKE_INSTALL_PREFIX)" "lib/cmake")
+set(PACKAGE_CONFIG_DIR "lib/cmake" CACHE STRING "Directory for package config files (relative to CMAKE_INSTALL_PREFIX)")
 
 # As of MUMPS 5 we can use Metis 5.1 :-)
 option(USE_METIS "${PROJECT_NAME} - Use METIS 5" OFF)
@@ -19,10 +19,12 @@ if (FORTRAN_MANGLING STREQUAL UpCase)
     set(FORTRAN_MANGLING UPPER)
 endif()
 
-find_package(MPI REQUIRED)
+# Find BLAS separately so we can use 'blas' target.
 find_package(BLAS ${BLAS_VERSION} REQUIRED)
 find_package(LAPACK ${LAPACK_VERSION} REQUIRED)
 find_package(SCALAPACK ${SCALAPACK_VERSION} REQUIRED)
+find_package(MPI REQUIRED)
+find_package(Threads)
 
 if (USE_PARMETIS)
     message(STATUS "Use of MUMPS with ParMETIS requested. Looking for library...")
@@ -39,7 +41,7 @@ elseif(USE_SCOTCH)
     find_package(SCOTCH ${SCOTCH_VERSION} REQUIRED)
 endif()
 
-SET(CMAKE_Fortran_MODULE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/fortran_modules)
+set(CMAKE_Fortran_MODULE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/fortran_modules)
 
 add_subdirectory(PORD)
 
@@ -59,26 +61,26 @@ set(mumps-src-f
     src/fac_maprow_data_m.F
     src/front_data_mgt_m.F
     src/mumps_comm_ibcast.F
-	src/mumps_l0_omp_m.F
-	src/mumps_ooc_common.F
+    src/mumps_l0_omp_m.F
+    src/mumps_ooc_common.F
     src/mumps_ooc_common.F
     src/mumps_print_defined.F
     src/mumps_sol_es.F
     src/mumps_static_mapping.F
-	src/mumps_type_size.F
+    src/mumps_type_size.F
     src/mumps_type2_blocking.F
     src/mumps_version.F
-	src/omp_tps_common_m.F
-	src/tools_common.F
-	src/tools_common_mod.F
+    src/omp_tps_common_m.F
+    src/tools_common.F
+    src/tools_common_mod.F
 )
 set(mumps-src-c
     src/mumps_common.c
-	src/mumps_io.c
+    src/mumps_io.c
     src/mumps_io_basic.c
     src/mumps_io_thread.c
     src/mumps_io_err.c
-	src/mumps_numa.c
+    src/mumps_numa.c
     src/mumps_orderings.c
     src/mumps_size.c
 )
@@ -174,9 +176,12 @@ set(mumps-src-arith
 foreach(lang f c)
     # Need to split c and fortran sources for VS
     add_library(mumps_common_${lang} ${mumps-src-${lang}})
-    target_link_libraries(mumps_common_${lang} PUBLIC blas scalapack pord)
-    target_include_directories(mumps_common_${lang} PRIVATE include PORD/include)
-    target_compile_definitions(mumps_common_${lang} PRIVATE pord ${FORTRAN_MANGLING})
+    if (lang STREQUAL "c")
+        target_link_libraries(mumps_common_${lang} PUBLIC Threads::Threads)
+    endif ()
+    target_link_libraries(mumps_common_${lang} PUBLIC scalapack pord)
+    target_include_directories(mumps_common_${lang} PRIVATE include)
+    target_compile_definitions(mumps_common_${lang} PRIVATE ${FORTRAN_MANGLING})
     if (USE_PTSCOTCH)
         target_compile_definitions(mumps_common_${lang} PRIVATE ptscotch)
         target_link_libraries(mumps_common_${lang} PUBLIC ptesmumps)
@@ -213,10 +218,10 @@ foreach(prec s d c z)
         add_library(${prec}mumps ${mumps-src-arith-${prec}})
         set_target_properties(${prec}mumps PROPERTIES
             OUTPUT_NAME ${prec}mumps-${MUMPS_VERSION})
+        target_include_directories(${prec}mumps PRIVATE include)
         target_link_libraries(${prec}mumps PUBLIC mumps_common)
         target_compile_definitions(${prec}mumps PRIVATE
             MUMPS_ARITH=MUMPS_ARITH_${prec}
-            pord
         )
         if (USE_PARMETIS)
             target_compile_definitions(${prec}mumps PRIVATE parmetis)
@@ -236,20 +241,13 @@ foreach(prec s d c z)
         # Arithmetic-dependent mumps c libraries
         add_library(${prec}mumps_c src/mumps_c.c)
         target_link_libraries(${prec}mumps_c PUBLIC mumps_common ${prec}mumps)
-        target_include_directories(${prec}mumps_c PRIVATE 
-            include PORD/include
-        )
-        #target_link_libraries(${prec}mumps_c PRIVATE mumps_common)
+        target_include_directories(${prec}mumps_c PRIVATE include)
         target_compile_definitions(${prec}mumps_c PRIVATE
             MUMPS_ARITH=MUMPS_ARITH_${prec}
             ${FORTRAN_MANGLING}
-            pord
         )
         
         list(APPEND PREC_LIBS ${prec}mumps ${prec}mumps_c)
-        target_include_directories(${prec}mumps PRIVATE 
-            include PORD/include
-        )
         # Make sure the according header files are installed
         install(DIRECTORY include/ DESTINATION include
             FILES_MATCHING PATTERN "${prec}mu*.h")
@@ -258,7 +256,7 @@ endforeach()
 
 # Add global interface target for easy linking if the build precisions are not known.
 add_library(mumps INTERFACE)
-target_link_libraries(mumps INTERFACE mumps_common ${PREC_LIBS} pord)
+target_link_libraries(mumps INTERFACE mumps_common ${PREC_LIBS})
 
 install(TARGETS mumps_common mumps_common_c mumps_common_f mumps ${PREC_LIBS} EXPORT mumps-config
     DESTINATION lib
@@ -276,15 +274,17 @@ file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/mumps-config-dependencies.cmake
     "include(CMakeFindDependencyMacro)\r\n"
     	"set(${PROJECT_NAME}_IMPORT_PREFIX \${_IMPORT_PREFIX})\r\n"
 )
+file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/mumps-config-dependencies.cmake "set(LAPACK_FIND_SYSTEM ${LAPACK_FIND_SYSTEM})\r\nfind_dependency(LAPACK)\r\n")
+file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/mumps-config-dependencies.cmake "set(SCALAPACK_FIND_SYSTEM ${SCALAPACK_FIND_SYSTEM})\r\nfind_dependency(SCALAPACK)\r\n")
 if (USE_PARMETIS)
-    file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/mumps-config-dependencies.cmake "find_dependency(PARMETIS)\r\n")
+    file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/mumps-config-dependencies.cmake "set(PARMETIS_FIND_SYSTEM ${PARMETIS_FIND_SYSTEM})\r\nfind_dependency(PARMETIS)\r\n")
 elseif(USE_METIS)
-    file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/mumps-config-dependencies.cmake "find_dependency(METIS)\r\n")    
+    file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/mumps-config-dependencies.cmake "set(METIS_FIND_SYSTEM ${METIS_FIND_SYSTEM})\r\nfind_dependency(METIS)\r\n")
 endif()
 if (USE_PTSCOTCH)
-    file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/mumps-config-dependencies.cmake "find_dependency(PTSCOTCH)\r\n")
+    file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/mumps-config-dependencies.cmake "set(PTSCOTCH_FIND_SYSTEM ${PTSCOTCH_FIND_SYSTEM})\r\nfind_dependency(PTSCOTCH)\r\n")
 elseif(USE_SCOTCH)
-    file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/mumps-config-dependencies.cmake "find_dependency(SCOTCH)\r\n")    
+    file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/mumps-config-dependencies.cmake "set(SCOTCH_FIND_SYSTEM ${SCOTCH_FIND_SYSTEM})\r\nfind_dependency(SCOTCH)\r\n")
 endif()
 file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/mumps-config-dependencies.cmake "set(_IMPORT_PREFIX \${${PROJECT_NAME}_IMPORT_PREFIX})")
 install(FILES 
